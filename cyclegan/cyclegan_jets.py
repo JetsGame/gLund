@@ -19,8 +19,8 @@ import os
 class CycleGAN():
     def __init__(self, path, labelA, labelB, nev):
         # Input shape
-        self.img_rows = 32
-        self.img_cols = 32
+        self.img_rows = 128
+        self.img_cols = 128
         self.channels = 1
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
         #self.img_shape = (self.img_rows, self.img_cols)
@@ -36,8 +36,8 @@ class CycleGAN():
         self.disc_patch = (patch, patch, 1)
 
         # Number of filters in the first layer of G and D
-        self.gf = 8
-        self.df = 16
+        self.gf = 32
+        self.df = 64
 
         # Loss weights
         self.lambda_cycle = 10.0                    # Cycle-consistency loss
