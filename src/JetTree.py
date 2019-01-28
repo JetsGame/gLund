@@ -37,17 +37,32 @@ class DeclustState:
     #----------------------------------------------------------------------
     def values(self):
         """Return the values of the declustering."""
-        return np.array([self.lnDelta, self.lnKt, self.lnPt1, self.lnPt2])
+        return np.append(self.kin_split(), np.append(self.kin_hard(),self.kin_soft()))
+
+    #----------------------------------------------------------------------
+    def kin_hard(self):
+        """Return kinematics of hard branch."""
+        return np.array([self.lnPt1])
+    
+    #----------------------------------------------------------------------
+    def kin_soft(self):
+        """Return kinematics of hard branch."""
+        return np.array([self.lnPt2])
+    
+    #----------------------------------------------------------------------
+    def kin_split(self):
+        """Return kinematics of splitting."""
+        return np.array([self.lnDelta, lnKt])
     
     #----------------------------------------------------------------------
     def values_hard(self):
         """Return the values of the hard branch of the declustering."""
-        return np.array([self.lnDelta, self.lnKt, self.lnPt1])
+        return np.append(self.kin_split(), self.kin_hard())
     
     #----------------------------------------------------------------------
     def values_soft(self):
         """Return the values of the soft branch of the declustering."""
-        return np.array([self.lnDelta, self.lnKt, self.lnPt2])
+        return np.append(self.kin_split(), self.kin_soft())
     
     #----------------------------------------------------------------------
     def __lt__(self, other_tree):
@@ -89,27 +104,6 @@ class JetTree:
                 node.softer = softer
             return node
         return None
-        
-    #----------------------------------------------------------------------
-    def values(self):
-        """Return values of the declustering node."""
-        if not self.state:
-            return np.zeros(DeclustState.dimension)
-        return self.state.values()
-    
-    #----------------------------------------------------------------------
-    def values_harder(self):
-        """Return values of the harder declustering node."""
-        if not self.state:
-            return np.zeros(DeclustState.dimension-1)
-        return self.state.values_harder()
-    
-    #----------------------------------------------------------------------
-    def values_softer(self):
-        """Return values of the harder declustering node."""
-        if not self.state:
-            return np.zeros(DeclustState.dimension-1)
-        return self.state.values_softer()
     
     #----------------------------------------------------------------------
     def __lt__(self, other_tree):
