@@ -1,18 +1,22 @@
+"""
+Contains the JetTree structure along with a DeclustState kinematic
+bookkeeping class and a LundImage visualization tool.
+"""
 import fastjet as fj
 import numpy as np
 import math
 
 #======================================================================
-class DeclustState:
-    """DeclustState contains information about a declustering."""
-    dimension = 4
-    
+class SplittingInfo:
+    dimension = 2
+
     #----------------------------------------------------------------------
-    def __init__(self, lnDelta, lnKt, lnPt1, lnPt2):
+    def __init__(self, lnDelta, lnKt):
         self.lnDelta = lnDelta
         self.lnKt    = lnKt
-        self.lnPt1   = lnPt1
-        self.lnPt2   = lnPt2
+        #self.lnz     = lnz
+        #self.lnKappa = lnKappa
+        #self.psi     = psi
 
     #----------------------------------------------------------------------
     @classmethod
@@ -20,50 +24,69 @@ class DeclustState:
         delta = math.sqrt(j1.squared_distance(j2))
         lnDelta = math.log(delta)
         lnKt    = math.log(j2.pt()*delta)
-        lnPt1   = math.log(j1.pt())
-        lnPt2   = math.log(j2.pt())
-        #lnm     = 0.5*math.log(abs((j1 + j2).m2()))
         #lnz     = math.log(z)
         #lnKappa = math.log(z * delta)
         #psi     = math.atan((j1.rap() - j2.rap())/(j1.phi() - j2.phi()))
-        return cls(lnDelta, lnKt, lnPt1, lnPt2)
-        #return cls(0.0, 0.0, 0.0, 0.0)
+        return cls(lnDelta, lnKt)
+
+    #----------------------------------------------------------------------
+    def values(self):
+        """Return kinematics of the splitting as an array."""
+        return np.array([self.lnDelta, self.lnKt])
+
+    #----------------------------------------------------------------------
+    def lund(self):
+        """Return a two-dimensional array with lund coordinates."""
+        return np.array([-self.lnDelta, self.lnKt])
+
+#======================================================================
+class BranchInfo:
+    dimension = 1
+
+    #----------------------------------------------------------------------
+    def __init__(self, lnPt):
+        self.lnPt = lnPt
+        #self.lnm  = lnm
+
+    #----------------------------------------------------------------------
+    @classmethod
+    def fromPseudoJet(cls, j):
+        lnPt = math.log(j.pt())
+        #lnm  = 0.5*math.log(abs(j.m2()))
+        return cls(lnPt)
+
+    #----------------------------------------------------------------------
+    def values(self):
+        """Return splitting information as an array."""
+        return np.array([self.lnPt])
+
+    #----------------------------------------------------------------------
+    def pt(self):
+        """Return pt of the branch."""
+        return math.exp(self.lnPt)
+        
+#======================================================================
+class KinematicState:
+    """DeclustState contains information about a declustering."""
+    dimension = 4
+    
+    #----------------------------------------------------------------------
+    def __init__(self, branch, splitting=None):
+        self.splitting = splitting
+        self.branch    = branch
 
     #----------------------------------------------------------------------
     def lund(self):
         """"Return a two-dimensional array with lund coordinates."""
         return np.array([-self.lnDelta, self.lnKt])
-
+    
     #----------------------------------------------------------------------
     def values(self):
-        """Return the values of the declustering."""
-        return np.append(self.kin_split(), np.append(self.kin_hard(),self.kin_soft()))
-
-    #----------------------------------------------------------------------
-    def kin_hard(self):
-        """Return kinematics of hard branch."""
-        return np.array([self.lnPt1])
-    
-    #----------------------------------------------------------------------
-    def kin_soft(self):
-        """Return kinematics of hard branch."""
-        return np.array([self.lnPt2])
-    
-    #----------------------------------------------------------------------
-    def kin_split(self):
-        """Return kinematics of splitting."""
-        return np.array([self.lnDelta, lnKt])
-    
-    #----------------------------------------------------------------------
-    def values_hard(self):
-        """Return the values of the hard branch of the declustering."""
-        return np.append(self.kin_split(), self.kin_hard())
-    
-    #----------------------------------------------------------------------
-    def values_soft(self):
-        """Return the values of the soft branch of the declustering."""
-        return np.append(self.kin_split(), self.kin_soft())
-    
+        """Return the values of the splitting and branch."""
+        if not self.splitting:
+            return self.branch.values()
+        return np.append(self.splitting.values(), self.branch.values())
+        
     #----------------------------------------------------------------------
     def __lt__(self, other_tree):
         """Comparison operator needed for a priority queue."""
@@ -82,29 +105,22 @@ class JetTree:
         
     #----------------------------------------------------------------------
     @classmethod
-    def fromPseudoJet(cls, pseudojet, child=None):
+    def fromPseudoJet(cls, jet, child=None, splitting=None):
         j1 = fj.PseudoJet()
         j2 = fj.PseudoJet()
-        state  = None
-        harder = None
-        softer = None
-        if pseudojet and pseudojet.has_parents(j1,j2):
+        branch = BranchInfo.fromPseudoJet(jet)
+        state  = KinematicState(branch, splitting)
+        node   = cls(state, child)
+        if jet and jet.has_parents(j1,j2):
             # order the parents in pt
             if (j2.pt() > j1.pt()):
                 j1,j2=j2,j1
-            state = DeclustState.fromPseudoJet(j1, j2)
-            tmp1 = fj.PseudoJet()
-            tmp2 = fj.PseudoJet()
-            node = cls(state, child)
-            if j1.has_parents(tmp1,tmp2):
-                harder = JetTree.fromPseudoJet(j1, node)
-                node.harder = harder
-            if j2.has_parents(tmp1,tmp2):
-                softer = JetTree.fromPseudoJet(j2, node)
-                node.softer = softer
-            return node
-        return None
-    
+            newsplitting = SplittingInfo.fromPseudoJet(j1, j2)
+            # should the following be cls.fromPseudoJet ?
+            node.harder  = JetTree.fromPseudoJet(j1, node, newsplitting)
+            node.softer  = JetTree.fromPseudoJet(j2, node, newsplitting)
+        return node
+        
     #----------------------------------------------------------------------
     def __lt__(self, other_tree):
         """Comparison operator needed for a priority queue."""
@@ -145,19 +161,18 @@ class LundImage:
     def __call__(self, tree):
         """Process a jet tree and return an image of the primary Lund plane."""
         res = np.zeros((self.npxlx,self.npxly))
-
         self.fill(tree, res)
         return res
 
     #----------------------------------------------------------------------
     def fill(self, tree, res):
         """Fill the res array recursively with the tree declusterings of the hard branch."""
-        if(tree and tree.state):
-            x,y = tree.state.lund()
+        if (tree and tree.state and tree.state.splitting):
+            x,y = tree.state.splitting.lund()
             xind = math.ceil((x - self.xmin)/self.x_pxl_wdth - 1.0)
             yind = math.ceil((y - self.ymin)/self.y_pxl_wdth - 1.0)
             if (xind < self.npxlx and yind < self.npxly and min(xind,yind) >= 0):
                 res[xind,yind] += 1
+        if (tree):
             self.fill(tree.harder, res)
-            #self.fill(tree.softer, res)
 
