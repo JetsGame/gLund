@@ -3,9 +3,9 @@ from JetTree import *
 import matplotlib.pyplot as plt
 from gan import GAN
 
-nev = 50000
-npxlx = 28
-npxly = 28
+nev = 20000
+npxlx = 10
+npxly = 10
 
 reader=Jets('../../data/valid/valid_WW_500GeV.json.gz',nev)
 events=reader.values() 
