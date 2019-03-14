@@ -2,7 +2,9 @@ from read_data import Reader, Jets
 from JetTree import *
 import matplotlib.pyplot as plt
 from gan import GAN
-
+from wgan_gp import WGANGP
+from wgan import WGAN
+import argparse
 def zca_whiten(X):
     """
     Applies ZCA whitening to the data (X)
@@ -29,11 +31,19 @@ def zca_whiten(X):
 
     return X_white
 
-nev = 20000
-npxlx = 10
-npxly = 10
+parser = argparse.ArgumentParser(description='Train a gan.')
+parser.add_argument('--wgangp',action='store_true',dest='wgangp')
+parser.add_argument('--wgan',action='store_true',dest='wgan')
+parser.add_argument('--vae',action='store_true',dest='vae')
+parser.add_argument('--nev', '-n', type=int, default=20000, help='Number of events.')
+parser.add_argument('--npix', '-p', type=int, default=28, help='Number of pixels.')
+args = parser.parse_args()
 
-reader=Jets('../../data/valid/valid_WW_500GeV.json.gz',nev)
+nev = args.nev
+npxlx = args.npix
+npxly = args.npix
+
+reader=Jets('../../data/valid/valid_QCD_500GeV.json.gz',nev)
 events=reader.values() 
 lundimages=np.zeros((nev, npxlx, npxly, 1))
 litest=[] 
@@ -45,11 +55,20 @@ for i, jet in enumerate(events):
 print(lundimages.shape)
 
 # normalisation of images
-lundimages = (lundimages - np.average(lundimages, axis=0))
+#lundimages = (lundimages - np.average(lundimages, axis=0))
 
 # plt.imshow(np.average(lundimages, axis=0).transpose(),
 #            origin='lower', aspect='auto')
 # plt.show()
 
-gan = GAN(width=npxlx, height=npxly, channels=1)
-gan.train(lundimages)
+if args.wgan:
+    gan = WGAN(width=npxlx, height=npxly, channels=1)
+    gan.train(lundimages, epochs=2000, batch_size=32, sample_interval=50)
+if args.wgangp:
+    gan = WGANGP(width=npxlx, height=npxly, channels=1)
+    gan.train(lundimages, epochs=2000, batch_size=32, sample_interval=50)
+elif args.vae:
+    print("not implemented")
+else:
+    gan = GAN(width=npxlx, height=npxly, channels=1)
+    gan.train(lundimages)

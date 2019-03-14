@@ -1,7 +1,7 @@
 import numpy as np
 from keras import Sequential
 from keras.layers import Dense, LeakyReLU, BatchNormalization, Reshape, Flatten
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 import matplotlib.pyplot as plt
 
 
@@ -15,7 +15,8 @@ class GAN(object):
 
         # optimizer
         self.optimizer = Adam(lr=0.0002, decay=8e-9)
-
+        #self.optimizer = RMSprop()
+        
         # noise
         self.noise = np.random.normal(0, 1, (100,))
 

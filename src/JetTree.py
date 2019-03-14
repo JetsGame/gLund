@@ -136,7 +136,7 @@ class LundImage:
 
     #----------------------------------------------------------------------
     def __init__(self, xval = [0.0, 7.0], yval = [-3.0, 7.0],
-                 npxlx = 50, npxly = None):
+                 npxlx = 50, npxly = None, norm_to_one = False):
         """Set up the LundImage instance."""
         # set up the pixel numbers
         self.npxlx = npxlx
@@ -144,6 +144,8 @@ class LundImage:
             self.npxly = npxlx
         else:
             self.npxly = npxly
+        # set a flag which determines if pixels are normalized to one or not
+        self.norm_to_one = norm_to_one
         # set up the bin edge and width
         self.xmin = xval[0]
         self.ymin = yval[0]
@@ -167,7 +169,7 @@ class LundImage:
             xind = math.ceil((x - self.xmin)/self.x_pxl_wdth - 1.0)
             yind = math.ceil((y - self.ymin)/self.y_pxl_wdth - 1.0)
             if (xind < self.npxlx and yind < self.npxly and min(xind,yind) >= 0):
-                res[xind,yind] += 1
+                if (res[xind,yind] < 1 or not self.norm_to_one) res[xind,yind] += 1
             self.fill(tree.harder, res)
             #self.fill(tree.softer, res)
 
