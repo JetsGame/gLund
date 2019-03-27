@@ -2,56 +2,59 @@ from read_data import Reader, Jets
 from JetTree import *
 import matplotlib.pyplot as plt
 from gan import GAN
+from dcgan import DCGAN
 from wgan_gp import WGANGP
 from wgan import WGAN
 import argparse
-def zca_whiten(X):
-    """
-    Applies ZCA whitening to the data (X)
-    http://xcorr.net/2011/05/27/whiten-a-matrix-matlab-code/
-
-    X: numpy 2d array
-        input data, rows are data points, columns are features
-
-    Returns: ZCA whitened 2d array
-    """
-    assert(X.ndim == 2)
-    EPS = 10e-5
-
-    #   covariance matrix
-    cov = np.dot(X.T, X)
-    #   d = (lambda1, lambda2, ..., lambdaN)
-    d, E = np.linalg.eigh(cov)
-    #   D = diag(d) ^ (-1/2)
-    D = np.diag(1. / np.sqrt(d + EPS))
-    #   W_zca = E * D * E.T
-    W = np.dot(np.dot(E, D), E.T)
-
-    X_white = np.dot(X, W)
-
-    return X_white
 
 parser = argparse.ArgumentParser(description='Train a gan.')
-parser.add_argument('--wgangp',action='store_true',dest='wgangp')
-parser.add_argument('--wgan',action='store_true',dest='wgan')
-parser.add_argument('--vae',action='store_true',dest='vae')
-parser.add_argument('--nev', '-n', type=int, default=20000, help='Number of events.')
-parser.add_argument('--npix', '-p', type=int, default=28, help='Number of pixels.')
+parser.add_argument('--gan',    action='store_true')
+parser.add_argument('--dcgan',  action='store_true')
+parser.add_argument('--wgan',   action='store_true')
+parser.add_argument('--wgangp', action='store_true')
+parser.add_argument('--vae',    action='store_true')
+parser.add_argument('--epochs', type=int, default=1000, help='Number of epochs.')
+parser.add_argument('--batch-size', type=int, default=32, dest='batch_size')
+parser.add_argument('--nev', '-n', type=int, default=-1,
+                    help='Number of training events.')
+parser.add_argument('--ngen', type=int, default=5000,
+                    help='Number of generated events.')
+parser.add_argument('--npx', type=int, default=28, help='Number of pixels.')
+parser.add_argument('--data', type=str,
+                    default='../../data/valid/valid_QCD_500GeV.json.gz',
+                    help='Data set on which to train.')
+parser.add_argument('--output', type=str, required=True, help='Output file.')
 args = parser.parse_args()
+# check that input is valid
+if not (args.gan+args.dcgan+args.wgan+args.wgangp+args.vae == 1):
+    raise ValueError('Invalid input: choose one model at a time.')
+if args.gan or args.vae:
+    # for GAN or VAE, we want to flatten the input and preprocess it
+    flat_input = True
+else:
+    flat_input = False
 
-nev = args.nev
-npxlx = args.npix
-npxly = args.npix
-
-reader=Jets('../../data/valid/valid_QCD_500GeV.json.gz',nev)
+# read in the data set
+reader=Jets(args.data, args.nev)
 events=reader.values() 
-lundimages=np.zeros((nev, npxlx, npxly, 1))
+lundimages=np.zeros((args.nev, args.npx, args.npx, 1))
 litest=[] 
-li_gen=LundImage(npxlx = npxlx, npxly = npxly) 
+li_gen=LundImage(npxlx = args.npx) 
 for i, jet in enumerate(events): 
     tree = JetTree(jet) 
-    lundimages[i]=li_gen(tree).reshape(npxlx, npxly, 1)
+    lundimages[i]=li_gen(tree).reshape(args.npx, args.npx, 1)
 
+# if we are using a generative model with dense layers,
+# we now preprocess and flatten the input
+if flat_input:
+    # add preprocessing steps here
+    
+    # flatten input
+    lundimages = lundimages.reshape(args.nev, args.npx*args.npx)
+else:
+    # add preprocessing steps for full images (e.g. ZCA?)
+    pass
+    
 print(lundimages.shape)
 
 # normalisation of images
@@ -61,14 +64,42 @@ print(lundimages.shape)
 #            origin='lower', aspect='auto')
 # plt.show()
 
+# now set up the model
 if args.wgan:
-    gan = WGAN(width=npxlx, height=npxly, channels=1)
-    gan.train(lundimages, epochs=2000, batch_size=32, sample_interval=50)
-if args.wgangp:
-    gan = WGANGP(width=npxlx, height=npxly, channels=1)
-    gan.train(lundimages, epochs=2000, batch_size=32, sample_interval=50)
+    model = WGAN(width=args.npx, height=args.npx)
+    model.train(lundimages, epochs=args.epochs,
+                batch_size=args.batch_size, sample_interval=50)
+elif args.wgangp:
+    model = WGANGP(width=args.npx, height=args.npx)
+    model.train(lundimages, epochs=args.epochs,
+                batch_size=args.batch_size, sample_interval=50)
 elif args.vae:
-    print("not implemented")
+    model = VAE(length=(args.npx*args.npx), mse_loss=False)
+    model.train(lundimages, epochs=args.epochs,
+                batch_size = args.batch_size)
+elif args.dcgan:
+    model = DCGAN(width=args.npx, height=args.npx)
+    model.train(lundimages, epochs=args.epochs,
+                batch_size = args.batch_size)
 else:
-    gan = GAN(width=npxlx, height=npxly, channels=1)
-    gan.train(lundimages)
+    model = GAN(width=args.npx, height=args.npx)
+    model.train(lundimages, epochs=args.epochs,
+                batch_size = args.batch_size)
+
+# now generate a test sample and save it
+gen_sample = model.generate(args.ngen)
+
+# invert the preprocessing/reshape to image if flattened
+if flat_input:
+    # undo preprocessing
+
+    # reshape to a 2-d image
+    gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
+else:
+    # image processing
+    gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
+
+np.save(args.output, gen_sample)
+print(gen_sample.shape)
+plt.imshow(np.average(gen_sample, axis=0))
+plt.show()

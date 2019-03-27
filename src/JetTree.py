@@ -169,7 +169,8 @@ class LundImage:
             xind = math.ceil((x - self.xmin)/self.x_pxl_wdth - 1.0)
             yind = math.ceil((y - self.ymin)/self.y_pxl_wdth - 1.0)
             if (xind < self.npxlx and yind < self.npxly and min(xind,yind) >= 0):
-                if (res[xind,yind] < 1 or not self.norm_to_one) res[xind,yind] += 1
+                if (res[xind,yind] < 1 or not self.norm_to_one):
+                    res[xind,yind] += 1
             self.fill(tree.harder, res)
             #self.fill(tree.softer, res)
 

@@ -29,11 +29,12 @@ class RandomWeightedAverage(_Merge):
         return (alpha * inputs[0]) + ((1 - alpha) * inputs[1])
 
 class WGANGP():
-    def __init__(self, width=28, height=28, channels=1):
+    def __init__(self, width=28, height=28):
+        if (width%4 or height%4):
+            raise ValueError('WGAN: Width and height need to be divisible by 4.')
         self.img_rows = width
         self.img_cols = height
-        self.channels = channels
-        self.img_shape = (self.img_rows, self.img_cols, self.channels)
+        self.img_shape = (self.img_rows, self.img_cols, 1)
         self.latent_dim = 100
 
         # Following parameter and optimizer set as recommended in paper
@@ -126,9 +127,9 @@ class WGANGP():
     def build_generator(self):
 
         model = Sequential()
-
-        model.add(Dense(128 * 7 * 7, activation="relu", input_dim=self.latent_dim))
-        model.add(Reshape((7, 7, 128)))
+        model.add(Dense(8 * self.img_rows * self.img_cols,
+                        activation="relu", input_dim=self.latent_dim))
+        model.add(Reshape((int(self.img_rows/4), int(self.img_cols/4), 128)))
         model.add(UpSampling2D())
         model.add(Conv2D(128, kernel_size=4, padding="same"))
         model.add(BatchNormalization(momentum=0.8))
@@ -137,7 +138,7 @@ class WGANGP():
         model.add(Conv2D(64, kernel_size=4, padding="same"))
         model.add(BatchNormalization(momentum=0.8))
         model.add(Activation("relu"))
-        model.add(Conv2D(self.channels, kernel_size=4, padding="same"))
+        model.add(Conv2D(1, kernel_size=4, padding="same"))
         model.add(Activation("tanh"))
 
         model.summary()
@@ -177,7 +178,7 @@ class WGANGP():
 
         return Model(img, validity)
 
-    def train(self, X_train, epochs, batch_size, sample_interval=50):
+    def train(self, X_train, epochs, batch_size=128, sample_interval=None):
 
         # # Load the dataset
         # (X_train, _), (_, _) = mnist.load_data()
@@ -217,17 +218,18 @@ class WGANGP():
             print ("%d [D loss: %f] [G loss: %f]" % (epoch, d_loss[0], g_loss))
 
             # If at save interval => save generated image samples
-            if epoch % sample_interval == 0:
+            if sample_interval and epoch % sample_interval == 0:
                 self.sample_images(epoch)
 
+    def generate(self, nev):
+        noise = np.random.normal(0, 1, (nev, self.latent_dim))
+        return self.generator.predict(noise)
+    
     def sample_images(self, epoch):
         r, c = 5, 5
-        noise = np.random.normal(0, 1, (r * c, self.latent_dim))
-        gen_imgs = self.generator.predict(noise)
-
+        gen_imgs = self.generate(r*c)
         # Rescale images 0 - 1
         gen_imgs = 0.5 * gen_imgs + 0.5
-
         fig, axs = plt.subplots(r, c)
         cnt = 0
         for i in range(r):
@@ -235,7 +237,7 @@ class WGANGP():
                 axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
                 axs[i,j].axis('off')
                 cnt += 1
-        fig.savefig("images/mnist_%d.png" % epoch)
+        fig.savefig("images/wgangp_%d.png" % epoch)
         plt.close()
 
 
@@ -245,6 +247,5 @@ if __name__ == '__main__':
     # Rescale -1 to 1
     X_train = (X_train.astype(np.float32) - 127.5) / 127.5
     X_train = np.expand_dims(X_train, axis=3)
-
     wgan = WGANGP()
     wgan.train(X_train, epochs=30000, batch_size=32, sample_interval=100)
