@@ -71,9 +71,9 @@ class GAN(object):
     def discriminator(self):
         """The GAN discriminator"""
         model = Sequential()
-        model.add(Dense((self.length), input_shape=self.shape))
+        model.add(Dense(512, input_shape=self.shape))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense((self.length)//2))
+        model.add(Dense(256))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(1, activation='sigmoid'))
         model.summary()
