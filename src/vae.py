@@ -23,7 +23,7 @@ from keras import backend as K
 
 import numpy as np
 import matplotlib.pyplot as plt
-import os, math
+import math
 
 # reparameterization trick
 # instead of sampling from Q(z|X), sample epsilon = N(0,I)
@@ -45,7 +45,7 @@ def sampling(args):
 
 class VAE(object):
 
-    def __init__(self, latent_dim=10, length=784, mse_loss=False):
+    def __init__(self, length=28*28, latent_dim=100, mse_loss=False):
         self.length = length
         self.latent_dim = latent_dim
         self.intermediate_dim = 512

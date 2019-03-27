@@ -17,13 +17,13 @@ import sys
 import numpy as np
 
 class WGAN():
-    def __init__(self, width=28, height=28):
+    def __init__(self, width=28, height=28, latent_dim=100):
         if (width%4 or height%4):
             raise ValueError('WGAN: Width and height need to be divisible by 4.')
         self.img_rows = width
         self.img_cols = height
         self.img_shape = (self.img_rows, self.img_cols, 1)
-        self.latent_dim = 100
+        self.latent_dim = latent_dim
 
         # Following parameter and optimizer set as recommended in paper
         self.n_critic = 5

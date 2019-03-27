@@ -1,3 +1,4 @@
+from keras.datasets import mnist
 from read_data import Reader, Jets 
 from JetTree import *
 import matplotlib.pyplot as plt
@@ -5,9 +6,12 @@ from gan import GAN
 from dcgan import DCGAN
 from wgan_gp import WGANGP
 from wgan import WGAN
+from vae import VAE
 import argparse
 
-parser = argparse.ArgumentParser(description='Train a gan.')
+parser = argparse.ArgumentParser(description='Train a generative model.')
+parser.add_argument('--mnist',  action='store_true',
+                    help='Train on MNIST data (for testing purposes).')
 parser.add_argument('--gan',    action='store_true')
 parser.add_argument('--dcgan',  action='store_true')
 parser.add_argument('--wgan',   action='store_true')
@@ -19,6 +23,7 @@ parser.add_argument('--nev', '-n', type=int, default=-1,
                     help='Number of training events.')
 parser.add_argument('--ngen', type=int, default=5000,
                     help='Number of generated events.')
+parser.add_argument('--dim', type=int, default=100, dest='latdim', help='Number of latent dimensions.')
 parser.add_argument('--npx', type=int, default=28, help='Number of pixels.')
 parser.add_argument('--data', type=str,
                     default='../../data/valid/valid_QCD_500GeV.json.gz',
@@ -35,14 +40,26 @@ else:
     flat_input = False
 
 # read in the data set
-reader=Jets(args.data, args.nev)
-events=reader.values() 
-lundimages=np.zeros((args.nev, args.npx, args.npx, 1))
-litest=[] 
-li_gen=LundImage(npxlx = args.npx) 
-for i, jet in enumerate(events): 
-    tree = JetTree(jet) 
-    lundimages[i]=li_gen(tree).reshape(args.npx, args.npx, 1)
+if args.mnist:
+    # for debugging purposes, we have the option of loading in the
+    # mnist data and training the model on this.
+    (img_train, _), (_, _) = mnist.load_data()
+    # Rescale -1 to 1
+    if not args.vae:
+        img_train = (img_train.astype(np.float32) - 127.5) / 127.5
+    else:
+        img_train = img_train.astype('float32') / 255
+    img_train = np.expand_dims(img_train, axis=3)
+else:
+    # load in the jets from file, and create an array of lund images
+    reader=Jets(args.data, args.nev)
+    events=reader.values() 
+    img_train=np.zeros((args.nev, args.npx, args.npx, 1))
+    litest=[] 
+    li_gen=LundImage(npxlx = args.npx) 
+    for i, jet in enumerate(events): 
+        tree = JetTree(jet) 
+        img_train[i]=li_gen(tree).reshape(args.npx, args.npx, 1)
 
 # if we are using a generative model with dense layers,
 # we now preprocess and flatten the input
@@ -50,41 +67,35 @@ if flat_input:
     # add preprocessing steps here
     
     # flatten input
-    lundimages = lundimages.reshape(args.nev, args.npx*args.npx)
+    img_train = img_train.reshape(img_train.shape[0], args.npx*args.npx)
 else:
     # add preprocessing steps for full images (e.g. ZCA?)
     pass
     
-print(lundimages.shape)
+print(img_train.shape)
 
 # normalisation of images
-#lundimages = (lundimages - np.average(lundimages, axis=0))
+#img_train = (img_train - np.average(img_train, axis=0))
 
-# plt.imshow(np.average(lundimages, axis=0).transpose(),
+# plt.imshow(np.average(img_train, axis=0).transpose(),
 #            origin='lower', aspect='auto')
 # plt.show()
 
 # now set up the model
 if args.wgan:
-    model = WGAN(width=args.npx, height=args.npx)
-    model.train(lundimages, epochs=args.epochs,
-                batch_size=args.batch_size, sample_interval=50)
+    model = WGAN(width=args.npx, height=args.npx, latent_dim=args.latdim)
 elif args.wgangp:
-    model = WGANGP(width=args.npx, height=args.npx)
-    model.train(lundimages, epochs=args.epochs,
-                batch_size=args.batch_size, sample_interval=50)
+    model = WGANGP(width=args.npx, height=args.npx, latent_dim=args.latdim)
 elif args.vae:
-    model = VAE(length=(args.npx*args.npx), mse_loss=False)
-    model.train(lundimages, epochs=args.epochs,
-                batch_size = args.batch_size)
+    model = VAE(length=(args.npx*args.npx), latent_dim=args.latdim, mse_loss=False)
 elif args.dcgan:
-    model = DCGAN(width=args.npx, height=args.npx)
-    model.train(lundimages, epochs=args.epochs,
-                batch_size = args.batch_size)
-else:
-    model = GAN(width=args.npx, height=args.npx)
-    model.train(lundimages, epochs=args.epochs,
-                batch_size = args.batch_size)
+    model = DCGAN(width=args.npx, height=args.npx, latent_dim=args.latdim)
+elif args.gan:
+    model = GAN(length=(args.npx*args.npx), latent_dim=args.latdim)
+
+# train on the images
+model.train(img_train, epochs=args.epochs,
+            batch_size = args.batch_size)
 
 # now generate a test sample and save it
 gen_sample = model.generate(args.ngen)
@@ -100,6 +111,5 @@ else:
     gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
 
 np.save(args.output, gen_sample)
-print(gen_sample.shape)
 plt.imshow(np.average(gen_sample, axis=0))
 plt.show()
