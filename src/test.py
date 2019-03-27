@@ -33,11 +33,8 @@ args = parser.parse_args()
 # check that input is valid
 if not (args.gan+args.dcgan+args.wgan+args.wgangp+args.vae == 1):
     raise ValueError('Invalid input: choose one model at a time.')
-if args.gan or args.vae:
-    # for GAN or VAE, we want to flatten the input and preprocess it
-    flat_input = True
-else:
-    flat_input = False
+# for GAN or VAE, we want to flatten the input and preprocess it
+flat_input = args.gan or args.vae
 
 # read in the data set
 if args.mnist:
