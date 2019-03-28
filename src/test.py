@@ -29,6 +29,7 @@ parser.add_argument('--data', type=str,
                     default='../../data/valid/valid_QCD_500GeV.json.gz',
                     help='Data set on which to train.')
 parser.add_argument('--pca', action='store_true', help='Perform PCA.')
+parser.add_argument('--zca', action='store_true', help='Perform ZCA.')
 parser.add_argument('--output', type=str, required=True, help='Output file.')
 args = parser.parse_args()
 # check that input is valid
@@ -81,6 +82,15 @@ if args.pca:
     pca = PCA(0.95)
     pca.fit(img_train)
     img_train = pca.transform(img_train)
+
+if args.zca:
+    from sklearn.preprocessing import StandardScaler
+    from tools import zca_whiten
+
+    scaler = StandardScaler()
+    scaler.fit(img_train)
+    img_train = scaler.transform(img_train)
+    img_train, zca = zca_whiten(img_train)
     
 print(img_train.shape)
 
@@ -117,6 +127,8 @@ if flat_input:
     # reshape to a 2-d image
     if args.pca:
         gen_sample = scaler.inverse_transform(pca.inverse_transform(gen_sample)).reshape(args.ngen, args.npx, args.npx)
+    elif args.zca:
+        gen_sample = scaler.inverse_transform(np.dot(gen_sample, zca)).reshape(args.ngen, args.npx, args.npx)
     else:
         gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
 else:

@@ -24,4 +24,4 @@ def zca_whiten(X):
 
     X_white = np.dot(X, W)
 
-    return X_white
+    return X_white, np.linalg.inv(W)
