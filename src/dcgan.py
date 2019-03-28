@@ -176,7 +176,13 @@ class DCGAN():
         """Save the GAN weights to file."""
         self.generator.save_weights('%s/generator.h5'%folder)
         self.discriminator.save_weights('%s/discriminator.h5'%folder)
-        
+
+    def description(self):
+        descrip = 'DCGAN with width=%i, height=%i, latent_dim=%i'\
+            % (self.img_rows, self.img_cols, self.latent_dim)
+        return descrip
+
+
 if __name__ == '__main__':
     
     # Load the dataset

@@ -11,7 +11,7 @@ from sklearn.decomposition import PCA
 from tools import zca_whiten
 import matplotlib.pyplot as plt
 import numpy as np
-import argparse, os, shutil
+import argparse, os, shutil, sys, datetime
 
 # read in the arguments
 parser = argparse.ArgumentParser(description='Train a generative model.')
@@ -103,8 +103,6 @@ else:
 
         img_train = img_train.reshape(-1, args.npx, args.npx, 1)
     
-print(img_train.shape)
-
 # normalisation of images
 #img_train = (img_train - np.average(img_train, axis=0))
 
@@ -157,8 +155,16 @@ elif args.force:
 else:
     raise Exception(f'{args.output} already exists, use "--force" to overwrite.')
 
-model.save(args.output)
-genfn = '%s/generated_images' % args.output.strip('/')
+
+folder = args.output.strip('/')
+with open('%s/info.txt' % folder,'w') as f:
+    print('# %s' % model.description(), file=f)
+    print('# created on %s with the command:' % datetime.datetime.utcnow(), file=f)
+    print('# '+' '.join(sys.argv), file=f)
+
+model.save(folder)
+
+genfn = '%s/generated_images' % folder
 np.save(genfn, gen_sample)
 plt.imshow(np.average(gen_sample, axis=0))
 plt.show()

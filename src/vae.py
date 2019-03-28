@@ -50,12 +50,13 @@ class VAE(object):
         self.latent_dim = latent_dim
         self.intermediate_dim = 512
         self.shape = (self.length,)
+        self.mse_loss = mse_loss
         # VAE model = encoder + decoder
-        self.build_VAE(mse_loss)
+        self.build_VAE()
         # set up everything
         
         
-    def build_VAE(self, mse_loss):
+    def build_VAE(self):
         # build encoder model
         inputs = Input(shape=self.shape, name='encoder_input')
         x = Dense(self.intermediate_dim, activation='relu')(inputs)
@@ -89,7 +90,7 @@ class VAE(object):
         vae = Model(inputs, outputs, name='vae_mlp')
         
         # VAE loss = mse_loss or xent_loss + kl_loss
-        if mse_loss:
+        if self.mse_loss:
             reconstruction_loss = mse(inputs, outputs)
         else:
             reconstruction_loss = binary_crossentropy(inputs,
@@ -145,6 +146,11 @@ class VAE(object):
         self.encoder.save_weights('%s/encoder.h5'%folder)
         self.decoder.save_weights('%s/decoder.h5'%folder)
 
+    def description(self):
+        descrip = 'VAE with length=%i, latent_dim=%i, mse_loss=%s'\
+            % (self.length, self.latent_dim, self.mse_loss)
+        return descrip
+    
 if __name__ == '__main__':
     
     # MNIST dataset

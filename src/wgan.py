@@ -193,6 +193,11 @@ class WGAN():
         self.generator.save_weights('%s/generator.h5'%folder)
         self.critic.save_weights('%s/critic.h5'%folder)
 
+    def description(self):
+        descrip = 'WGAN with width=%i, height=%i, latent_dim=%i'\
+            % (self.img_rows, self.img_cols, self.latent_dim)
+        return descrip
+
 if __name__ == '__main__':
     # Load the dataset
     (X_train, _), (_, _) = mnist.load_data()

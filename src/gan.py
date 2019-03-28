@@ -117,6 +117,10 @@ class GAN(object):
         """Save the GAN weights to file."""
         self.generator.save_weights('%s/generator.h5'%folder)
         self.discriminator.save_weights('%s/discriminator.h5'%folder)
+
+    def description(self):
+        return 'GAN with length=%i, latent_dim=%i' % (self.length, self.latent_dim)
+
         
 if __name__ == '__main__':
     
