@@ -5,12 +5,12 @@ from matplotlib.backends.backend_pdf import PdfPages
 def plot_mnist(filename):
     r, c = 5, 5
     imgs = np.load(filename)
-    imgs[np.random.choice(imgs.shape[0], r*c, replace=False), :]
+    sample = imgs[np.random.choice(imgs.shape[0], r*c, replace=False), :]
     fig, axs = plt.subplots(r, c)
     cnt = 0
     for i in range(r):
         for j in range(c):
-            axs[i,j].imshow(imgs[cnt, :,:], cmap='gray')
+            axs[i,j].imshow(sample[cnt, :,:], cmap='gray')
             axs[i,j].axis('off')
             cnt += 1
     figname=filename.split(os.extsep)[0]+'.pdf'

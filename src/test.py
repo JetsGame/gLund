@@ -52,7 +52,6 @@ else:
     reader=Jets(args.data, args.nev)
     events=reader.values() 
     img_train=np.zeros((len(events), args.npx, args.npx, 1))
-    litest=[] 
     li_gen=LundImage(npxlx = args.npx) 
     for i, jet in enumerate(events): 
         tree = JetTree(jet) 

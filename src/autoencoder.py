@@ -1,0 +1,50 @@
+from keras.layers import Input, Dense
+from keras.models import Model
+from keras.datasets import mnist
+from keras import backend as K
+
+class Autoencoder:
+    def __init__(self, width=28, height=28, dim=100):
+        self.width  = width
+        self.height = height
+        self.length = width*height
+        self.dim = dim
+        self.build_AE()
+
+    def build_AE(self):
+        """Construct an autoencoder"""
+        inputs = Input(shape=(self.length,))
+        encoded = Dense(512, activation='relu')(inputs)
+        encoded = Dense(256, activation='relu')(encoded)
+        encoded = Dense(self.dim, activation='relu')(encoded)
+        
+        decoded = Dense(256, activation='relu')(encoded)
+        decoded = Dense(512, activation='relu')(decoded)
+        decoded = Dense(self.length, activation='sigmoid')(decoded)
+
+        self.autoencoder = Model(inputs, decoded)
+        self.encoder     = Model(inputs, encoded)
+        encoded_inputs = Input(shape=(self.dim, ))
+        # retrieve the layers of the autoencoder model
+        decoder_layer1 = self.autoencoder.layers[-3]
+        decoder_layer2 = self.autoencoder.layers[-2]
+        decoder_layer3 = self.autoencoder.layers[-1]
+        outputs = decoder_layer3(decoder_layer2(decoder_layer1(encoded_inputs)))
+        # create the decoder model
+        self.decoder = Model(encoded_inputs, outputs)
+        # configure model to use a per-pixel binary crossentropy loss,
+        # and the Adadelta optimizer
+        self.autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
+
+    def train(self, X_train, epochs, batch_size=128, sample_interval=None):
+        # autoencode the model
+        self.autoencoder.fit(X_train, X_train, epochs=epochs,
+                             batch_size=batch_size, shuffle=True,
+                             validation_split=0.1)
+
+    def encode(self, image):
+        return self.encoder.predict(image.reshape(image.shape[0],self.length))
+
+    def decode(self, encoded_img):
+        return self.decoder.predict(encoded_img).reshape(encoded_img.shape[0],
+                                                         self.width,self.height,1)
