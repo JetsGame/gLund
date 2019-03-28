@@ -8,6 +8,9 @@ from wgan_gp import WGANGP
 from wgan import WGAN
 from vae import VAE
 import argparse
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from tools import zca_whiten
 
 parser = argparse.ArgumentParser(description='Train a generative model.')
 parser.add_argument('--mnist',  action='store_true',
@@ -67,30 +70,32 @@ if flat_input:
     
     # flatten input
     img_train = img_train.reshape(img_train.shape[0], args.npx*args.npx)
+
+    # apply pca transform
+    if args.pca:
+        scaler = StandardScaler()
+        scaler.fit(img_train)
+        img_train = scaler.transform(img_train)
+        pca = PCA(0.95)
+        pca.fit(img_train)
+        img_train = pca.transform(img_train)
+    
+    if args.zca:
+        scaler = StandardScaler()
+        scaler.fit(img_train)
+        img_train = scaler.transform(img_train)
+        img_train, zca = zca_whiten(img_train)
 else:
     # add preprocessing steps for full images (e.g. ZCA?)
-    pass
+    if args.zca:
+        img_train = img_train.reshape(img_train.shape[0], args.npx*args.npx)
 
-# apply pca transform
-if args.pca:
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.decomposition import PCA
-    
-    scaler = StandardScaler()
-    scaler.fit(img_train)
-    img_train = scaler.transform(img_train)
-    pca = PCA(0.95)
-    pca.fit(img_train)
-    img_train = pca.transform(img_train)
+        scaler = StandardScaler()
+        scaler.fit(img_train)
+        img_train = scaler.transform(img_train)
+        img_train, zca = zca_whiten(img_train)
 
-if args.zca:
-    from sklearn.preprocessing import StandardScaler
-    from tools import zca_whiten
-
-    scaler = StandardScaler()
-    scaler.fit(img_train)
-    img_train = scaler.transform(img_train)
-    img_train, zca = zca_whiten(img_train)
+        img_train = img_train.reshape(-1, args.npx, args.npx, 1)
     
 print(img_train.shape)
 
@@ -133,7 +138,10 @@ if flat_input:
         gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
 else:
     # image processing
-    gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
+    if args.zca:
+        gen_sample = scaler.inverse_transform(np.dot(gen_sample.reshape(-1, args.npx*args.npx), zca)).reshape(args.ngen, args.npx, args.npx)
+    else:
+        gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
 
 np.save(args.output, gen_sample)
 plt.imshow(np.average(gen_sample, axis=0))
