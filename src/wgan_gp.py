@@ -240,6 +240,16 @@ class WGANGP():
         fig.savefig("images/wgangp_%d.png" % epoch)
         plt.close()
 
+    def load(self, folder):
+        """Load GAN from input folder"""
+        # load the weights from input folder
+        self.generator.load_weights('%s/generator.h5'%folder)
+        self.critic.load_weights('%s/critic.h5'%folder)
+
+    def save(self, folder):
+        """Save the GAN weights to file."""
+        self.generator.save_weights('%s/generator.h5'%folder)
+        self.critic.save_weights('%s/critic.h5'%folder)
 
 if __name__ == '__main__':
     # Load the dataset

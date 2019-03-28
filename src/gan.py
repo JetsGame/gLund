@@ -19,10 +19,10 @@ class GAN(object):
         #self.optimizer = RMSprop()
 
         # allocate generator and discriminant
-        self.G = self.generator()
-        self.G.compile(loss='binary_crossentropy', optimizer=self.optimizer)
-        self.D = self.discriminator()
-        self.D.compile(loss='binary_crossentropy', optimizer=self.optimizer, metrics=['accuracy'])
+        self.generator = self.build_generator()
+        self.generator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        self.discriminator = self.build_discriminator()
+        self.discriminator.compile(loss='binary_crossentropy', optimizer=self.optimizer, metrics=['accuracy'])
 
         self.adversarial_model = self.ad_model()
         self.adversarial_model.compile(loss='binary_crossentropy', optimizer=self.optimizer)
@@ -35,12 +35,12 @@ class GAN(object):
             random_index = np.random.randint(0, len(x) - batch_size//2)
             legit_images = x[random_index:random_index+batch_size//2].reshape(batch_size//2, self.length)
             gen_noise = np.random.normal(0, 1, (batch_size//2, self.latent_dim))
-            syntetic_images = self.G.predict(gen_noise)
+            syntetic_images = self.generator.predict(gen_noise)
 
             x_combined_batch = np.concatenate((legit_images, syntetic_images))
             y_combined_batch = np.concatenate((np.ones((batch_size//2, 1)), np.zeros((batch_size//2, 1))))
 
-            d_loss = self.D.train_on_batch(x_combined_batch, y_combined_batch)
+            d_loss = self.discriminator.train_on_batch(x_combined_batch, y_combined_batch)
 
             # train generator
             noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
@@ -53,7 +53,7 @@ class GAN(object):
             if save_interval and ite % save_interval == 0 : 
                 self.plot_images(step=ite)
 
-    def generator(self):
+    def build_generator(self):
         """The GAN generator"""
         model = Sequential()
         model.add(Dense(256, input_shape=(self.latent_dim,)))
@@ -68,7 +68,7 @@ class GAN(object):
         model.add(Dense(self.length, activation='tanh'))
         return model
 
-    def discriminator(self):
+    def build_discriminator(self):
         """The GAN discriminator"""
         model = Sequential()
         model.add(Dense(512, input_shape=self.shape))
@@ -80,15 +80,15 @@ class GAN(object):
         return model
 
     def ad_model(self):
-        self.D.trainable = False
+        self.discriminator.trainable = False
         model = Sequential()
-        model.add(self.G)
-        model.add(self.D)
+        model.add(self.generator)
+        model.add(self.discriminator)
         return model
 
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev,self.latent_dim))
-        return self.G.predict(noise)
+        return self.generator.predict(noise)
 
     def plot_images(self, samples=16, step=0):
         filename = f"images/dcgan_{step}.png"
@@ -107,6 +107,17 @@ class GAN(object):
         plt.savefig(filename)
         plt.close('all')
 
+    def load(self, folder):
+        """Load GAN from input folder"""
+        # load the weights from input folder
+        self.generator.load_weights('%s/generator.h5'%folder)
+        self.discriminator.load_weights('%s/discriminator.h5'%folder)
+
+    def save(self, folder):
+        """Save the GAN weights to file."""
+        self.generator.save_weights('%s/generator.h5'%folder)
+        self.discriminator.save_weights('%s/discriminator.h5'%folder)
+        
 if __name__ == '__main__':
     
     # Load the dataset

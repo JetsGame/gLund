@@ -165,6 +165,17 @@ class DCGAN():
                 cnt += 1
         fig.savefig("images/dcgan_%d.png" % epoch)
         plt.close()
+    
+    def load(self, folder):
+        """Load GAN from input folder"""
+        # load the weights from input folder
+        self.generator.load_weights('%s/generator.h5'%folder)
+        self.discriminator.load_weights('%s/discriminator.h5'%folder)
+
+    def save(self, folder):
+        """Save the GAN weights to file."""
+        self.generator.save_weights('%s/generator.h5'%folder)
+        self.discriminator.save_weights('%s/discriminator.h5'%folder)
         
 if __name__ == '__main__':
     

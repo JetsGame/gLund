@@ -1,17 +1,19 @@
 from keras.datasets import mnist
 from read_data import Reader, Jets 
-from JetTree import *
-import matplotlib.pyplot as plt
+from JetTree import JetTree, LundImage
 from gan import GAN
 from dcgan import DCGAN
 from wgan_gp import WGANGP
 from wgan import WGAN
 from vae import VAE
-import argparse
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from tools import zca_whiten
+import matplotlib.pyplot as plt
+import numpy as np
+import argparse, os, shutil
 
+# read in the arguments
 parser = argparse.ArgumentParser(description='Train a generative model.')
 parser.add_argument('--mnist',  action='store_true',
                     help='Train on MNIST data (for testing purposes).')
@@ -33,11 +35,16 @@ parser.add_argument('--data', type=str,
                     help='Data set on which to train.')
 parser.add_argument('--pca', action='store_true', help='Perform PCA.')
 parser.add_argument('--zca', action='store_true', help='Perform ZCA.')
-parser.add_argument('--output', type=str, required=True, help='Output file.')
+parser.add_argument('--output', type=str, required=True, help='Output folder.')
+parser.add_argument('--force', action='store_true', help='Overwrite existing output if necessary')
 args = parser.parse_args()
+
 # check that input is valid
 if not (args.gan+args.dcgan+args.wgan+args.wgangp+args.vae == 1):
     raise ValueError('Invalid input: choose one model at a time.')
+if os.path.exists(args.output) and not args.force:
+    raise Exception(f'{args.output} already exists, use "--force" to overwrite.')
+
 # for GAN or VAE, we want to flatten the input and preprocess it
 flat_input = args.gan or args.vae
 
@@ -61,7 +68,6 @@ else:
     for i, jet in enumerate(events): 
         tree = JetTree(jet) 
         img_train[i]=li_gen(tree).reshape(args.npx, args.npx, 1)
-
 
 # if we are using a generative model with dense layers,
 # we now preprocess and flatten the input
@@ -143,6 +149,16 @@ else:
     else:
         gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
 
-np.save(args.output, gen_sample)
+if not os.path.exists(args.output):
+    os.mkdir(args.output)
+elif args.force:
+    shutil.rmtree(args.output)
+    os.mkdir(args.output)
+else:
+    raise Exception(f'{args.output} already exists, use "--force" to overwrite.')
+
+model.save(args.output)
+genfn = '%s/generated_images' % args.output.strip('/')
+np.save(genfn, gen_sample)
 plt.imshow(np.average(gen_sample, axis=0))
 plt.show()
