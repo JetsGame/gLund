@@ -51,7 +51,7 @@ else:
     # load in the jets from file, and create an array of lund images
     reader=Jets(args.data, args.nev)
     events=reader.values() 
-    img_train=np.zeros((args.nev, args.npx, args.npx, 1))
+    img_train=np.zeros((len(events), args.npx, args.npx, 1))
     litest=[] 
     li_gen=LundImage(npxlx = args.npx) 
     for i, jet in enumerate(events): 
