@@ -134,6 +134,17 @@ class VAE(object):
                     fig.savefig("images/vae_final.png")
                     plt.close()
 
+    def load(self, folder):
+        """Load GAN from input folder"""
+        # load the weights from input folder
+        self.encoder.load_weights('%s/encoder.h5'%folder)
+        self.decoder.load_weights('%s/decoder.h5'%folder)
+
+    def save(self, folder):
+        """Save the GAN weights to file."""
+        self.encoder.save_weights('%s/encoder.h5'%folder)
+        self.decoder.save_weights('%s/decoder.h5'%folder)
+
 if __name__ == '__main__':
     
     # MNIST dataset
