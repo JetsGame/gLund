@@ -28,6 +28,7 @@ parser.add_argument('--npx', type=int, default=28, help='Number of pixels.')
 parser.add_argument('--data', type=str,
                     default='../../data/valid/valid_QCD_500GeV.json.gz',
                     help='Data set on which to train.')
+parser.add_argument('--pca', action='store_true', help='Perform PCA.')
 parser.add_argument('--output', type=str, required=True, help='Output file.')
 args = parser.parse_args()
 # check that input is valid
@@ -57,6 +58,7 @@ else:
         tree = JetTree(jet) 
         img_train[i]=li_gen(tree).reshape(args.npx, args.npx, 1)
 
+
 # if we are using a generative model with dense layers,
 # we now preprocess and flatten the input
 if flat_input:
@@ -67,6 +69,18 @@ if flat_input:
 else:
     # add preprocessing steps for full images (e.g. ZCA?)
     pass
+
+# apply pca transform
+if args.pca:
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.decomposition import PCA
+    
+    scaler = StandardScaler()
+    scaler.fit(img_train)
+    img_train = scaler.transform(img_train)
+    pca = PCA(0.95)
+    pca.fit(img_train)
+    img_train = pca.transform(img_train)
     
 print(img_train.shape)
 
@@ -83,11 +97,11 @@ if args.wgan:
 elif args.wgangp:
     model = WGANGP(width=args.npx, height=args.npx, latent_dim=args.latdim)
 elif args.vae:
-    model = VAE(length=(args.npx*args.npx), latent_dim=args.latdim, mse_loss=False)
+    model = VAE(length=(img_train.shape[1]), latent_dim=args.latdim, mse_loss=False)
 elif args.dcgan:
     model = DCGAN(width=args.npx, height=args.npx, latent_dim=args.latdim)
 elif args.gan:
-    model = GAN(length=(args.npx*args.npx), latent_dim=args.latdim)
+    model = GAN(length=(img_train.shape[1]), latent_dim=args.latdim)
 
 # train on the images
 model.train(img_train, epochs=args.epochs,
@@ -101,7 +115,10 @@ if flat_input:
     # undo preprocessing
 
     # reshape to a 2-d image
-    gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
+    if args.pca:
+        gen_sample = scaler.inverse_transform(pca.inverse_transform(gen_sample)).reshape(args.ngen, args.npx, args.npx)
+    else:
+        gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
 else:
     # image processing
     gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
