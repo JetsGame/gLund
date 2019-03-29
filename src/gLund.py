@@ -8,7 +8,7 @@ from wgan import WGAN
 from vae import VAE
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from tools import zca_whiten
+from tools import zca_whiten, loss_calc
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse, os, shutil, sys, datetime
@@ -157,10 +157,19 @@ else:
 
 
 folder = args.output.strip('/')
+# for loss function, define epsilon and retransform the training sample
+epsilon=0.05
+if args.pca:
+    img_train = scaler.inverse_transform(pca.inverse_transform(img_train))
+elif args.zca:
+    img_train = scaler.inverse_transform(np.dot(img_train, zca))
+ref_sample = img_train.reshape(img_train.shape[0],args.npx,args.npx)\
+    [np.random.choice(img_train.shape[0], len(gen_sample), replace=True), :]
 with open('%s/info.txt' % folder,'w') as f:
     print('# %s' % model.description(), file=f)
     print('# created on %s with the command:' % datetime.datetime.utcnow(), file=f)
     print('# '+' '.join(sys.argv), file=f)
+    print('# loss = %f' % loss_calc(gen_sample,ref_sample,epsilon))
 
 model.save(folder)
 
