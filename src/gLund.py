@@ -1,5 +1,5 @@
 from keras.datasets import mnist
-from read_data import Reader, Jets 
+from read_data import Jets
 from JetTree import JetTree, LundImage
 from gan import GAN
 from dcgan import DCGAN
