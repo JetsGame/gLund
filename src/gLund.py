@@ -74,7 +74,7 @@ else:
 if args.pca:
     preprocess = PreprocessPCA(args.pca, whiten=False)
 elif args.zca:
-    preprocess = PreprocessZCA(flatten=flat_input)
+    preprocess = PreprocessZCA(flatten=flat_input, remove_zero=flat_input)
 
 # prepare the training data for the model training
 if args.pca or args.zca:
