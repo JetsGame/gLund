@@ -20,6 +20,7 @@ from keras.datasets import mnist
 from keras.losses import mse, binary_crossentropy
 from keras.utils import plot_model
 from keras import backend as K
+from keras.optimizers import Adam
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -101,7 +102,9 @@ class VAE(object):
         kl_loss *= -0.5
         vae_loss = K.mean(reconstruction_loss + kl_loss)
         vae.add_loss(vae_loss)
-        vae.compile(optimizer='adam')
+        optimizer = Adam(0.0003, 0.9)
+        vae.compile(optimizer=optimizer)
+        # vae.compile(optimizer='adam')
         vae.summary()
         # plot_model(vae,to_file='vae_mlp.png',show_shapes=True)
         self.vae = vae

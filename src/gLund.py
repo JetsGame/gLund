@@ -6,9 +6,8 @@ from dcgan import DCGAN
 from wgan_gp import WGANGP
 from wgan import WGAN
 from vae import VAE
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from tools import zca_whiten, loss_calc
+from tools import loss_calc
+from preprocess import PreprocessPCA, PreprocessZCA
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse, os, shutil, sys, datetime
@@ -33,7 +32,8 @@ parser.add_argument('--npx', type=int, default=28, help='Number of pixels.')
 parser.add_argument('--data', type=str,
                     default='../../data/valid/valid_QCD_500GeV.json.gz',
                     help='Data set on which to train.')
-parser.add_argument('--pca', action='store_true', help='Perform PCA.')
+parser.add_argument('--pca', action='store',const=0.95, default=None,
+                    nargs='?', type=float, help='Perform PCA.')
 parser.add_argument('--zca', action='store_true', help='Perform ZCA.')
 parser.add_argument('--output', type=str, required=True, help='Output folder.')
 parser.add_argument('--force', action='store_true', help='Overwrite existing output if necessary')
@@ -69,46 +69,20 @@ else:
         tree = JetTree(jet) 
         img_train[i]=li_gen(tree).reshape(args.npx, args.npx, 1)
 
-# if we are using a generative model with dense layers,
-# we now preprocess and flatten the input
-if flat_input:
-    # add preprocessing steps here
-    
-    # flatten input
-    img_train = img_train.reshape(img_train.shape[0], args.npx*args.npx)
 
-    # apply pca transform
-    if args.pca:
-        scaler = StandardScaler()
-        scaler.fit(img_train)
-        img_train = scaler.transform(img_train)
-        pca = PCA(0.95)
-        pca.fit(img_train)
-        img_train = pca.transform(img_train)
-    
-    if args.zca:
-        scaler = StandardScaler()
-        scaler.fit(img_train)
-        img_train = scaler.transform(img_train)
-        img_train, zca = zca_whiten(img_train)
-else:
-    # add preprocessing steps for full images (e.g. ZCA?)
-    if args.zca:
-        img_train = img_train.reshape(img_train.shape[0], args.npx*args.npx)
+# if requested, set up a preprocessing pipeline
+if args.pca:
+    preprocess = PreprocessPCA(args.pca, whiten=False)
+elif args.zca:
+    preprocess = PreprocessZCA(flatten=flat_input)
 
-        scaler = StandardScaler()
-        scaler.fit(img_train)
-        img_train = scaler.transform(img_train)
-        img_train, zca = zca_whiten(img_train)
-
-        img_train = img_train.reshape(-1, args.npx, args.npx, 1)
-    
-# normalisation of images
-#img_train = (img_train - np.average(img_train, axis=0))
-
-# plt.imshow(np.average(img_train, axis=0).transpose(),
-#            origin='lower', aspect='auto')
-# plt.show()
+# prepare the training data for the model training
+if args.pca or args.zca:
+    preprocess.fit(img_train)
+    # NB: for ZCA, the zca factor is set in the process.transform call
+    img_train = preprocess.transform(img_train)
+elif flat_input:
+    img_train = img_train.reshape(-1, args.npx*args.npx)
 
 # now set up the model
 if args.wgan:
@@ -129,24 +103,13 @@ model.train(img_train, epochs=args.epochs,
 # now generate a test sample and save it
 gen_sample = model.generate(args.ngen)
 
-# invert the preprocessing/reshape to image if flattened
-if flat_input:
-    # undo preprocessing
-
-    # reshape to a 2-d image
-    if args.pca:
-        gen_sample = scaler.inverse_transform(pca.inverse_transform(gen_sample)).reshape(args.ngen, args.npx, args.npx)
-    elif args.zca:
-        gen_sample = scaler.inverse_transform(np.dot(gen_sample, zca)).reshape(args.ngen, args.npx, args.npx)
-    else:
-        gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
+# retransform the generated sample to image space
+if args.pca or args.zca:
+    gen_sample = preprocess.inverse(gen_sample)
 else:
-    # image processing
-    if args.zca:
-        gen_sample = scaler.inverse_transform(np.dot(gen_sample.reshape(-1, args.npx*args.npx), zca)).reshape(args.ngen, args.npx, args.npx)
-    else:
-        gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
+    gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
 
+# prepare the output folder
 if not os.path.exists(args.output):
     os.mkdir(args.output)
 elif args.force:
@@ -154,26 +117,28 @@ elif args.force:
     os.mkdir(args.output)
 else:
     raise Exception(f'{args.output} already exists, use "--force" to overwrite.')
-
-
 folder = args.output.strip('/')
+
 # for loss function, define epsilon and retransform the training sample
 epsilon=0.05
-if args.pca:
-    img_train = scaler.inverse_transform(pca.inverse_transform(img_train))
-elif args.zca:
-    img_train = scaler.inverse_transform(np.dot(img_train, zca))
+# get reference sample and generated sample for tests
+if args.pca or args.zca:
+    img_train = preprocess.inverse(img_train)
 ref_sample = img_train.reshape(img_train.shape[0],args.npx,args.npx)\
     [np.random.choice(img_train.shape[0], len(gen_sample), replace=True), :]
+
+# write out a file with basic information on the run
 with open('%s/info.txt' % folder,'w') as f:
     print('# %s' % model.description(), file=f)
     print('# created on %s with the command:' % datetime.datetime.utcnow(), file=f)
     print('# '+' '.join(sys.argv), file=f)
-    print('# loss = %f' % loss_calc(gen_sample,ref_sample,epsilon))
+    print('# loss = %f' % loss_calc(gen_sample,ref_sample,epsilon), file=f)
 
+# save the model to file
 model.save(folder)
 
+# save a generated sample to file and plot the average image
 genfn = '%s/generated_images' % folder
-np.save(genfn, gen_sample)
+np.save(genfn, np.round(gen_sample))
 plt.imshow(np.average(gen_sample, axis=0))
 plt.show()

@@ -12,7 +12,7 @@ def plot_mnist(filename):
     cnt = 0
     for i in range(r):
         for j in range(c):
-            axs[i,j].imshow(sample[cnt, :,:], cmap='gray')
+            axs[i,j].imshow(sample[cnt, :,:], cmap='gray',vmin=0.0,vmax=2.0)
             axs[i,j].axis('off')
             cnt += 1
     figname=filename.split(os.extsep)[0]+'.pdf'
@@ -28,7 +28,7 @@ def plot_lund(filename, figname):
         cnt = 0
         for i in range(r):
             for j in range(c):
-                axs[i,j].imshow(sample[cnt, :,:], cmap='gray')
+                axs[i,j].imshow(sample[cnt, :,:], cmap='gray',vmin=0.0,vmax=2.0)
                 axs[i,j].axis('off')
                 cnt += 1
         pdf.savefig()
@@ -57,7 +57,7 @@ def plot_lund_with_ref(filename, reference, figname):
         cnt = 0
         for i in range(r):
             for j in range(c):
-                axs[i,j].imshow(imgs[cnt, :,:], cmap='gray')
+                axs[i,j].imshow(imgs[cnt, :,:], cmap='gray',vmin=0.0,vmax=2.0)
                 axs[i,j].axis('off')
                 cnt += 1
         pdf.savefig()
@@ -67,19 +67,21 @@ def plot_lund_with_ref(filename, reference, figname):
         cnt = 0
         for i in range(r):
             for j in range(c):
-                axs[i,j].imshow(imgs_ref[cnt, :,:], cmap='gray')
+                axs[i,j].imshow(imgs_ref[cnt, :,:], cmap='gray',vmin=0.0,vmax=2.0)
                 axs[i,j].axis('off')
                 cnt += 1
         pdf.savefig()
         plt.close()
         fig=plt.figure()
         plt.title('generated')
-        plt.imshow(np.average(imgs,axis=0))
+        plt.imshow(np.average(imgs,axis=0),vmin=0.0,vmax=0.7)
+        plt.colorbar(orientation='vertical', label=r'$\rho$')
         pdf.savefig()
         plt.close()
         fig=plt.figure()
         plt.title('reference')
-        plt.imshow(np.average(imgs_ref,axis=0))
+        plt.imshow(np.average(imgs_ref,axis=0),vmin=0.0, vmax=0.7)
+        plt.colorbar(orientation='vertical', label=r'$\rho$')
         plt.close()
         pdf.savefig(fig)
 
