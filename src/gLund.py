@@ -2,6 +2,7 @@ from keras.datasets import mnist
 from read_data import Jets
 from JetTree import JetTree, LundImage
 from gan import GAN
+from bgan import BGAN
 from dcgan import DCGAN
 from wgan_gp import WGANGP
 from wgan import WGAN
@@ -21,6 +22,7 @@ parser.add_argument('--dcgan',  action='store_true')
 parser.add_argument('--wgan',   action='store_true')
 parser.add_argument('--wgangp', action='store_true')
 parser.add_argument('--vae',    action='store_true')
+parser.add_argument('--bgan',    action='store_true')
 parser.add_argument('--epochs', type=int, default=1000, help='Number of epochs.')
 parser.add_argument('--batch-size', type=int, default=32, dest='batch_size')
 parser.add_argument('--nev', '-n', type=int, default=-1,
@@ -40,7 +42,7 @@ parser.add_argument('--force', action='store_true', help='Overwrite existing out
 args = parser.parse_args()
 
 # check that input is valid
-if not (args.gan+args.dcgan+args.wgan+args.wgangp+args.vae == 1):
+if not (args.gan+args.dcgan+args.wgan+args.wgangp+args.vae+args.bgan == 1):
     raise ValueError('Invalid input: choose one model at a time.')
 if os.path.exists(args.output) and not args.force:
     raise Exception(f'{args.output} already exists, use "--force" to overwrite.')
@@ -95,6 +97,8 @@ elif args.dcgan:
     model = DCGAN(width=args.npx, height=args.npx, latent_dim=args.latdim)
 elif args.gan:
     model = GAN(length=(img_train.shape[1]), latent_dim=args.latdim)
+elif args.bgan:
+    model = BGAN(length=(img_train.shape[1]), latent_dim=args.latdim)
 
 # train on the images
 model.train(img_train, epochs=args.epochs,

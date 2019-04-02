@@ -5,6 +5,12 @@ This repository investigates some generative models for Jets.
 
 TODO: Lund images with GAN, CVAE, CycleGAN
 
+
+Try Boundary Seeking GANs for discrete inputs:
+- https://github.com/rdevon/BGAN
+- https://arxiv.org/pdf/1702.08431.pdf
+
+
 Some ressources:
 - https://github.com/eriklindernoren/Keras-GAN
 - https://github.com/znxlwm/pytorch-generative-model-collections
