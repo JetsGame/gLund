@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from read_data import Jets 
 from JetTree import JetTree, LundImage
 import numpy as np
@@ -19,9 +20,13 @@ def plot_mnist(filename):
     fig.savefig(figname)
     plt.close()
 
-def plot_lund(filename, figname):
+def plot_lund(filename, figname, eps=None, rnd=False):
     r, c = 5, 5
     imgs = np.load(filename)
+    if eps:
+        imgs[imgs<eps]=0
+    if rnd:
+        imgs = np.round(imgs)
     sample = imgs[np.random.choice(imgs.shape[0], r*c, replace=False), :]
     with PdfPages(figname) as pdf:
         fig, axs = plt.subplots(r, c)
@@ -38,9 +43,13 @@ def plot_lund(filename, figname):
         plt.close()
         pdf.savefig(fig)
         
-def plot_lund_with_ref(filename, reference, figname):
+def plot_lund_with_ref(filename, reference, figname, eps=None, rnd=False):
     r, c = 5, 5
     imgs = np.load(filename)
+    if eps:
+        imgs[imgs<eps]=0.0
+    if rnd:
+        imgs = np.round(imgs)
     sample = imgs[np.random.choice(imgs.shape[0], r*c, replace=False), :]
     # now read in the pythia reference sample
     reader=Jets(reference, imgs.shape[0])
@@ -82,6 +91,13 @@ def plot_lund_with_ref(filename, reference, figname):
         plt.title('reference')
         plt.imshow(np.average(imgs_ref,axis=0),vmin=0.0, vmax=0.7)
         plt.colorbar(orientation='vertical', label=r'$\rho$')
+        pdf.savefig()
+        plt.close()
+        fig=plt.figure()
+        plt.title('generated/reference')
+        plt.imshow(np.divide(np.average(imgs,axis=0),np.average(imgs_ref,axis=0)),
+                   vmin=0.0, vmax=2.0, cmap=cm.seismic)
+        plt.colorbar(orientation='vertical')
         plt.close()
         pdf.savefig(fig)
 
@@ -90,6 +106,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Plot a model.')
     parser.add_argument('--data', type=str, default=None, help='Generated images')
     parser.add_argument('--reference', type=str, default=None, help='Pythia reference')
+    parser.add_argument('--round', action='store_true',
+                        help='Round all pixel values to nearest integer')
+    parser.add_argument('--epsilon', action='store', default=None,
+                        type=float, help='Threshold for pixel activation.')
     args = parser.parse_args()
 
     if not args.data:
@@ -106,7 +126,7 @@ if __name__ == '__main__':
         plot_lund('test/lund_wgangp.npy')
     elif args.reference:
         figname=args.data.split(os.extsep)[0]+'.pdf'
-        plot_lund_with_ref(args.data, args.reference, figname)
+        plot_lund_with_ref(args.data, args.reference, figname, args.epsilon, args.round)
     else:
         figname=args.data.split(os.extsep)[0]+'.pdf'
-        plot_lund(args.data, figname)
+        plot_lund(args.data, figname, args.epsilon, args.round)

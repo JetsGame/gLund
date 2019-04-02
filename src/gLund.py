@@ -143,6 +143,6 @@ model.save(folder)
 
 # save a generated sample to file and plot the average image
 genfn = '%s/generated_images' % folder
-np.save(genfn, np.round(gen_sample))
+np.save(genfn, gen_sample)
 plt.imshow(np.average(gen_sample, axis=0))
 plt.show()
