@@ -7,6 +7,7 @@ from dcgan import DCGAN
 from wgan_gp import WGANGP
 from wgan import WGAN
 from vae import VAE
+from aae import AdversarialAutoencoder
 from tools import loss_calc
 from preprocess import PreprocessPCA, PreprocessZCA
 import matplotlib.pyplot as plt
@@ -22,6 +23,7 @@ parser.add_argument('--dcgan',  action='store_true')
 parser.add_argument('--wgan',   action='store_true')
 parser.add_argument('--wgangp', action='store_true')
 parser.add_argument('--vae',    action='store_true')
+parser.add_argument('--aae',    action='store_true')
 parser.add_argument('--bgan',    action='store_true')
 parser.add_argument('--epochs', type=int, default=1000, help='Number of epochs.')
 parser.add_argument('--batch-size', type=int, default=32, dest='batch_size')
@@ -42,13 +44,13 @@ parser.add_argument('--force', action='store_true', help='Overwrite existing out
 args = parser.parse_args()
 
 # check that input is valid
-if not (args.gan+args.dcgan+args.wgan+args.wgangp+args.vae+args.bgan == 1):
+if not (args.gan+args.dcgan+args.wgan+args.wgangp+args.vae+args.bgan+args.aae == 1):
     raise ValueError('Invalid input: choose one model at a time.')
 if os.path.exists(args.output) and not args.force:
     raise Exception(f'{args.output} already exists, use "--force" to overwrite.')
 
 # for GAN or VAE, we want to flatten the input and preprocess it
-flat_input = args.gan or args.vae
+flat_input = args.gan or args.vae or args.bgan or args.aae
 
 # read in the data set
 if args.mnist:
@@ -99,6 +101,8 @@ elif args.gan:
     model = GAN(length=(img_train.shape[1]), latent_dim=args.latdim)
 elif args.bgan:
     model = BGAN(length=(img_train.shape[1]), latent_dim=args.latdim)
+elif args.aae:
+    model = AdversarialAutoencoder(length=(img_train.shape[1]), latent_dim=args.latdim)
 
 # train on the images
 model.train(img_train, epochs=args.epochs,

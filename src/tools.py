@@ -38,11 +38,11 @@ def loss_calc(imgs_gen, imgs_ref, epsilon):
     loss += abs(act_pix[0]-act_pix[1]) + abs(act_pix_var[0]-act_pix_var[1])
     # finally add the distance metric between the images
     loss += np.linalg.norm(np.average(imgs_gen,axis=0)-np.average(imgs_ref,axis=0))
-    # print('sum_avg: %f\tsum_var: %f\tact_avg:%f\tact_var%f' %\
-    #       (abs(sum_pix[0]-sum_pix[1]),abs(sum_pix_var[0]-sum_pix_var[1]),
-    #        abs(act_pix[0]-act_pix[1]),abs(act_pix_var[0]-act_pix_var[1])))
-    # print('image loss: %f' % \
-    #       np.linalg.norm(np.average(imgs_gen,axis=0)-np.average(imgs_ref,axis=0)))
+    print('sum_avg: %f\tsum_var: %f\tact_avg:%f\tact_var%f' %\
+          (abs(sum_pix[0]-sum_pix[1]),abs(sum_pix_var[0]-sum_pix_var[1]),
+           abs(act_pix[0]-act_pix[1]),abs(act_pix_var[0]-act_pix_var[1])))
+    print('image loss: %f' % \
+          np.linalg.norm(np.average(imgs_gen,axis=0)-np.average(imgs_ref,axis=0)))
     return loss
 
 def zca_whiten(X):
