@@ -96,7 +96,7 @@ def plot_lund_with_ref(filename, reference, figname, eps=None, rnd=False):
         fig=plt.figure()
         plt.title('generated/reference')
         plt.imshow(np.divide(np.average(imgs,axis=0),np.average(imgs_ref,axis=0)),
-                   vmin=0.0, vmax=2.0, cmap=cm.seismic)
+                   vmin=0.5, vmax=1.5, cmap=cm.seismic)
         plt.colorbar(orientation='vertical')
         plt.close()
         pdf.savefig(fig)

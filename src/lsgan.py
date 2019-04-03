@@ -6,7 +6,6 @@ from keras.layers import BatchNormalization, Activation
 from keras.layers.advanced_activations import LeakyReLU
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
-import keras.backend as K
 
 import matplotlib.pyplot as plt
 
@@ -14,18 +13,18 @@ import sys, math
 
 import numpy as np
 
-class BGAN():
-    """Reference: https://wiseodd.github.io/techblog/2017/03/07/boundary-seeking-gan/"""
+class LSGAN():
     def __init__(self, length=28*28, latent_dim=100):
         self.length = length
-        self.shape = (self.length, )
+        self.shape  = (self.length,)
         self.latent_dim = latent_dim
+        self.latent_dim = 100
 
         optimizer = Adam(0.0002, 0.5)
 
         # Build and compile the discriminator
         self.discriminator = self.build_discriminator()
-        self.discriminator.compile(loss='binary_crossentropy',
+        self.discriminator.compile(loss='mse',
             optimizer=optimizer,
             metrics=['accuracy'])
 
@@ -43,9 +42,10 @@ class BGAN():
         valid = self.discriminator(img)
 
         # The combined model  (stacked generator and discriminator)
-        # Trains the generator to fool the discriminator
+        # Trains generator to fool discriminator
         self.combined = Model(z, valid)
-        self.combined.compile(loss=self.boundary_loss, optimizer=optimizer)
+        # (!!!) Optimize w.r.t. MSE loss instead of crossentropy
+        self.combined.compile(loss='mse', optimizer=optimizer)
 
     def build_generator(self):
 
@@ -61,7 +61,6 @@ class BGAN():
         model.add(LeakyReLU(alpha=0.2))
         model.add(BatchNormalization(momentum=0.8))
         model.add(Dense(self.length, activation='tanh'))
-        # model.add(Reshape(self.img_shape))
 
         model.summary()
 
@@ -74,25 +73,18 @@ class BGAN():
 
         model = Sequential()
 
-        #model.add(Flatten(input_shape=self.shape))
         model.add(Dense(512, input_shape=self.shape))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(256))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(1, activation='sigmoid'))
+        # (!!!) No softmax
+        model.add(Dense(1))
         model.summary()
 
         img = Input(shape=self.shape)
         validity = model(img)
 
         return Model(img, validity)
-
-    def boundary_loss(self, y_true, y_pred):
-        """
-        Boundary seeking loss.
-        Reference: https://wiseodd.github.io/techblog/2017/03/07/boundary-seeking-gan/
-        """
-        return 0.5 * K.mean((K.log(y_pred) - K.log(1 - y_pred))**2)
 
     def train(self, X_train, epochs, batch_size=128, sample_interval=None):
 
@@ -110,6 +102,7 @@ class BGAN():
             idx = np.random.randint(0, X_train.shape[0], batch_size)
             imgs = X_train[idx]
 
+            # Sample noise as generator input
             noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
 
             # Generate a batch of new images
@@ -128,7 +121,9 @@ class BGAN():
             g_loss = self.combined.train_on_batch(noise, valid)
 
             # Plot the progress
-            print ("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100*d_loss[1], g_loss))
+            if epoch%10==0:
+                print ("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]"
+                       % (epoch, d_loss[0], 100*d_loss[1], g_loss))
 
             # If at save interval => save generated image samples
             if sample_interval and epoch % sample_interval == 0:
@@ -137,11 +132,12 @@ class BGAN():
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev, self.latent_dim))
         return self.generator.predict(noise)
-
+    
     def sample_images(self, epoch):
         r, c = 5, 5
         npixel = int(math.sqrt(self.length))
         gen_imgs = self.generate(r*c).reshape(r*c,npixel,npixel,1)
+
         # Rescale images 0 - 1
         gen_imgs = 0.5 * gen_imgs + 0.5
 
@@ -167,7 +163,7 @@ class BGAN():
         self.discriminator.save_weights('%s/discriminator.h5'%folder)
         
     def description(self):
-        descrip = 'BGAN with length=%i, latent_dim=%i'\
+        descrip = 'LSGAN with length=%i, latent_dim=%i'\
             % (self.length, self.latent_dim)
         return descrip
 
@@ -176,8 +172,7 @@ if __name__ == '__main__':
     # Load the dataset
     (X_train, _), (_, _) = mnist.load_data()
     # Rescale -1 to 1
-    X_train = X_train / 127.5 - 1.
+    X_train = (X_train.astype(np.float32) - 127.5) / 127.5
     X_train = X_train.reshape(X_train.shape[0], X_train.shape[1]*X_train.shape[2])
-    # set up the BGAN
-    bgan = BGAN()
-    bgan.train(X_train, epochs=30000, batch_size=32, sample_interval=200)
+    gan = LSGAN()
+    gan.train(X_train, epochs=30000, batch_size=32, sample_interval=200)
