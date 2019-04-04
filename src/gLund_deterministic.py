@@ -33,7 +33,6 @@ parser.add_argument('--data', type=str,
                     help='Data set on which to train.')
 parser.add_argument('--pca', action='store',const=0.95, default=None,
                     nargs='?', type=float, help='Perform PCA.')
-parser.add_argument('--navg', type=int, default=4, help='Number of pixels.')
 parser.add_argument('--zca', action='store_true', help='Perform ZCA.')
 parser.add_argument('--output', type=str, required=True, help='Output folder.')
 parser.add_argument('--force', action='store_true', help='Overwrite existing output if necessary')
@@ -65,20 +64,11 @@ else:
     reader=Jets(args.data, args.nev)
     events=reader.values() 
     img_train=np.zeros((len(events), args.npx, args.npx, 1))
-    li_gen=LundImage(npxlx = args.npx, norm_to_one=True) 
+    li_gen=LundImage(npxlx = args.npx) 
     for i, jet in enumerate(events): 
         tree = JetTree(jet) 
         img_train[i]=li_gen(tree).reshape(args.npx, args.npx, 1)
 
-# now reformat the training set as its average over n elements
-batch_averaged_img = np.zeros((args.nev, args.npx, args.npx, 1))
-for i in range(args.nev):
-    batch_averaged_img[i] = \
-        np.average(img_train[np.random.choice(img_train.shape[0], args.navg,
-                                              replace=False), :], axis=0)
-img_train = batch_averaged_img
-# img_train=np.array([np.average(img_train[args.navg*i:args.navg*i+args.navg],axis=0)
-#                     for i in range(len(img_train)//args.navg)])
 
 # if requested, set up a preprocessing pipeline
 if args.pca:
@@ -125,13 +115,6 @@ if args.pca or args.zca:
 else:
     gen_sample = gen_sample.reshape(args.ngen, args.npx, args.npx)
 
-# now interpret the probabilistic sample as physical images
-for i,v in np.ndenumerate(gen_sample):
-    if v < np.random.uniform(0,1):
-        gen_sample[i]=0.0
-    else:
-        gen_sample[i]=1.0
-    
 # prepare the output folder
 if not os.path.exists(args.output):
     os.mkdir(args.output)

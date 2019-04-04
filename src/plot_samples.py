@@ -43,7 +43,8 @@ def plot_lund(filename, figname, eps=None, rnd=False):
         plt.close()
         pdf.savefig(fig)
         
-def plot_lund_with_ref(filename, reference, figname, eps=None, rnd=False):
+def plot_lund_with_ref(filename, reference, figname, eps=None,
+                       rnd=False, prob=False):
     r, c = 5, 5
     imgs = np.load(filename)
     if eps:
@@ -55,7 +56,8 @@ def plot_lund_with_ref(filename, reference, figname, eps=None, rnd=False):
     reader=Jets(reference, imgs.shape[0])
     events=reader.values() 
     imgs_ref=np.zeros((len(events), imgs.shape[1], imgs.shape[2]))
-    li_gen=LundImage(npxlx = imgs.shape[1], npxly = imgs.shape[2]) 
+    li_gen=LundImage(npxlx = imgs.shape[1], npxly = imgs.shape[2],
+                     norm_to_one=prob) 
     for i, jet in enumerate(events): 
         tree = JetTree(jet) 
         imgs_ref[i]=li_gen(tree).reshape(imgs.shape[1], imgs.shape[2])
@@ -110,8 +112,10 @@ if __name__ == '__main__':
                         help='Round all pixel values to nearest integer')
     parser.add_argument('--epsilon', action='store', default=None,
                         type=float, help='Threshold for pixel activation.')
+    parser.add_argument('--deterministic', action='store_true',
+                        help='Round all pixel values to nearest integer')
     args = parser.parse_args()
-
+    prob = not args.deterministic
     if not args.data:
         plot_mnist('test/mnist_dcgan.npy')
         plot_mnist('test/mnist_gan.npy')
@@ -126,7 +130,8 @@ if __name__ == '__main__':
         plot_lund('test/lund_wgangp.npy')
     elif args.reference:
         figname=args.data.split(os.extsep)[0]+'.pdf'
-        plot_lund_with_ref(args.data, args.reference, figname, args.epsilon, args.round)
+        plot_lund_with_ref(args.data, args.reference, figname,
+                           args.epsilon, args.round, prob)
     else:
         figname=args.data.split(os.extsep)[0]+'.pdf'
         plot_lund(args.data, figname, args.epsilon, args.round)
