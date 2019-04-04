@@ -2,7 +2,7 @@
 from glund.read_data import Jets
 from glund.JetTree import JetTree, LundImage
 from glund.tools import loss_calc
-from glund.models import *
+from glund.model import *
 from glund.preprocess import PreprocessPCA, PreprocessZCA
 import matplotlib.pyplot as plt
 import numpy as np
@@ -76,8 +76,9 @@ def main():
 
     if not setup['deterministic']:
         # now reformat the training set as its average over n elements
-        batch_averaged_img = np.zeros((len(img_train), setup['npx'], setup['npx'], 1))
-        for i in range(setup['nev']):
+        nev = max(len(img_train),setup['nev'])
+        batch_averaged_img = np.zeros((nev, setup['npx'], setup['npx'], 1))
+        for i in range(nev):
             batch_averaged_img[i] = \
                 np.average(img_train[np.random.choice(img_train.shape[0], setup['navg'],
                                                     replace=False), :], axis=0)
