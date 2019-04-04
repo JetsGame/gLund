@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from read_data import Jets 
-from JetTree import JetTree, LundImage
+from glund.read_data import Jets 
+from glund.JetTree import JetTree, LundImage
 import numpy as np
 import os, argparse
 from matplotlib.backends.backend_pdf import PdfPages
@@ -103,7 +103,7 @@ def plot_lund_with_ref(filename, reference, figname, eps=None,
         plt.close()
         pdf.savefig(fig)
 
-if __name__ == '__main__':
+def main():
     # read in the arguments
     parser = argparse.ArgumentParser(description='Plot a model.')
     parser.add_argument('--data', type=str, default=None, help='Generated images')
