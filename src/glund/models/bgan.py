@@ -1,11 +1,12 @@
 from __future__ import print_function, division
 
+from glund.models.optimizer import optimizer
+
 from keras.datasets import mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout
 from keras.layers import BatchNormalization, Activation
 from keras.layers.advanced_activations import LeakyReLU
 from keras.models import Sequential, Model
-from keras.optimizers import Adam
 import keras.backend as K
 
 import matplotlib.pyplot as plt
@@ -16,21 +17,23 @@ import numpy as np
 
 class BGAN():
     """Reference: https://wiseodd.github.io/techblog/2017/03/07/boundary-seeking-gan/"""
-    def __init__(self, length=28*28, latent_dim=100):
+    def __init__(self, hps, length=28*28):
         self.length = length
         self.shape = (self.length, )
-        self.latent_dim = latent_dim
+        self.latent_dim = hps['latdim']
 
-        optimizer = Adam(0.0002, 0.5)
+        #optimizer = Adam(0.0002, 0.5)
+        opt = optimizer(hps)
 
         # Build and compile the discriminator
-        self.discriminator = self.build_discriminator()
+        self.discriminator = self.build_discriminator(units=hps['nn_smallest_unit'], alpha=hps['nn_alpha'])
         self.discriminator.compile(loss='binary_crossentropy',
-            optimizer=optimizer,
-            metrics=['accuracy'])
+                                   optimizer=opt,
+                                   metrics=['accuracy'])
 
-        # Build the generator
-        self.generator = self.build_generator()
+        # Build the generato
+        self.generator = self.build_generator(units=hps['nn_smallest_unit'],
+                                              alpha=hps['nn_alpha'], momentum=hps['nn_momentum'])
 
         # The generator takes noise as input and generated imgs
         z = Input(shape=(self.latent_dim,))
@@ -45,21 +48,21 @@ class BGAN():
         # The combined model  (stacked generator and discriminator)
         # Trains the generator to fool the discriminator
         self.combined = Model(z, valid)
-        self.combined.compile(loss=self.boundary_loss, optimizer=optimizer)
+        self.combined.compile(loss=self.boundary_loss, optimizer=opt)
 
-    def build_generator(self):
+    def build_generator(self, units=256, alpha=0.2, momentum=0.8):
 
         model = Sequential()
 
-        model.add(Dense(256, input_dim=self.latent_dim))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Dense(512))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Dense(1024))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(BatchNormalization(momentum=0.8))
+        model.add(Dense(units, input_dim=self.latent_dim))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(BatchNormalization(momentum=momentum))
+        model.add(Dense(units*2))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(BatchNormalization(momentum=momentum))
+        model.add(Dense(units*4))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(BatchNormalization(momentum=momentum))
         model.add(Dense(self.length, activation='tanh'))
         # model.add(Reshape(self.img_shape))
 
@@ -70,15 +73,15 @@ class BGAN():
 
         return Model(noise, img)
 
-    def build_discriminator(self):
+    def build_discriminator(self, units=256, alpha=0.2):
 
         model = Sequential()
 
         #model.add(Flatten(input_shape=self.shape))
-        model.add(Dense(512, input_shape=self.shape))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(256))
-        model.add(LeakyReLU(alpha=0.2))
+        model.add(Dense(units*2, input_shape=self.shape))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(Dense(units))
+        model.add(LeakyReLU(alpha=alpha))
         model.add(Dense(1, activation='sigmoid'))
         model.summary()
 

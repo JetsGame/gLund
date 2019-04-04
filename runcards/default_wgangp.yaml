@@ -38,11 +38,12 @@ deterministic: false
 
 # Optimizer parameters
 # options are: Adam, RMSprop, Adagrad, SGD
-optimizer: Adam
-learning_rate: 0.0002
-opt_decay: 0.000000008 # => 8e-9
+optimizer: RMSprop
+learning_rate: 0.00005
 
-# GAN architecture parameters
-nn_smallest_unit: 256
+# WGANGP architecture parameters
+n_critic: 5
+nn_smallest_unit: 16
 nn_alpha: 0.2
 nn_momentum: 0.8
+nn_dropout: 0.25

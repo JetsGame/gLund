@@ -4,6 +4,8 @@
 
 from __future__ import print_function, division
 
+from glund.models.optimizer import optimizer
+
 from keras.datasets import mnist
 from keras.layers.merge import _Merge
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout
@@ -11,7 +13,6 @@ from keras.layers import BatchNormalization, Activation, ZeroPadding2D
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Sequential, Model
-from keras.optimizers import RMSprop
 from functools import partial
 
 import keras.backend as K
@@ -25,25 +26,30 @@ import numpy as np
 class RandomWeightedAverage(_Merge):
     """Provides a (random) weighted average between real and generated image samples"""
     def _merge_function(self, inputs):
+        # FD: should this be (hps['nn_smallest_unit']*2, 1, 1 ,1) now?
         alpha = K.random_uniform((32, 1, 1, 1))
         return (alpha * inputs[0]) + ((1 - alpha) * inputs[1])
 
 class WGANGP():
-    def __init__(self, width=28, height=28, latent_dim=100):
-        if (width%4 or height%4):
+    def __init__(self, hps):
+        if (hps['npx']%4):
             raise ValueError('WGAN: Width and height need to be divisible by 4.')
-        self.img_rows = width
-        self.img_cols = height
+        self.img_rows = hps['npx']
+        self.img_cols = hps['npx']
         self.img_shape = (self.img_rows, self.img_cols, 1)
-        self.latent_dim = latent_dim
+        self.latent_dim = hps['latdim']
 
         # Following parameter and optimizer set as recommended in paper
-        self.n_critic = 5
-        optimizer = RMSprop(lr=0.00005)
+        self.n_critic = hps['n_critic']
+        opt = optimizer(hps)
 
         # Build the generator and critic
-        self.generator = self.build_generator()
-        self.critic = self.build_critic()
+        self.generator = self.build_generator(units=hps['nn_smallest_unit'],
+                                              momentum=hps['nn_momentum'])
+        self.critic = self.build_critic(units=hps['nn_smallest_unit'],
+                                        alpha=hps['nn_alpha'],
+                                        momentum=hps['nn_momentum'],
+                                        dropout=hps['nn_dropout'])
 
         #-------------------------------
         # Construct Computational Graph
@@ -81,7 +87,7 @@ class WGANGP():
         self.critic_model.compile(loss=[self.wasserstein_loss,
                                               self.wasserstein_loss,
                                               partial_gp_loss],
-                                        optimizer=optimizer,
+                                        optimizer=opt,
                                         loss_weights=[1, 1, 10])
         #-------------------------------
         # Construct Computational Graph
@@ -100,7 +106,7 @@ class WGANGP():
         valid = self.critic(img)
         # Defines generator model
         self.generator_model = Model(z_gen, valid)
-        self.generator_model.compile(loss=self.wasserstein_loss, optimizer=optimizer)
+        self.generator_model.compile(loss=self.wasserstein_loss, optimizer=opt)
 
 
     def gradient_penalty_loss(self, y_true, y_pred, averaged_samples):
@@ -124,19 +130,19 @@ class WGANGP():
     def wasserstein_loss(self, y_true, y_pred):
         return K.mean(y_true * y_pred)
 
-    def build_generator(self):
+    def build_generator(self, units=16, momentum=0.8):
 
         model = Sequential()
-        model.add(Dense(8 * self.img_rows * self.img_cols,
+        model.add(Dense(units * self.img_rows * self.img_cols//2,
                         activation="relu", input_dim=self.latent_dim))
-        model.add(Reshape((int(self.img_rows/4), int(self.img_cols/4), 128)))
+        model.add(Reshape((self.img_rows//4, self.img_cols//4, units*8)))
         model.add(UpSampling2D())
-        model.add(Conv2D(128, kernel_size=4, padding="same"))
-        model.add(BatchNormalization(momentum=0.8))
+        model.add(Conv2D(units*8, kernel_size=4, padding="same"))
+        model.add(BatchNormalization(momentum=momentum))
         model.add(Activation("relu"))
         model.add(UpSampling2D())
-        model.add(Conv2D(64, kernel_size=4, padding="same"))
-        model.add(BatchNormalization(momentum=0.8))
+        model.add(Conv2D(units*4, kernel_size=4, padding="same"))
+        model.add(BatchNormalization(momentum=momentum))
         model.add(Activation("relu"))
         model.add(Conv2D(1, kernel_size=4, padding="same"))
         model.add(Activation("tanh"))
@@ -148,26 +154,26 @@ class WGANGP():
 
         return Model(noise, img)
 
-    def build_critic(self):
+    def build_critic(self, units=16, alpha=0.2, momentum=0.8, dropout=0.25):
 
         model = Sequential()
 
-        model.add(Conv2D(16, kernel_size=3, strides=2, input_shape=self.img_shape, padding="same"))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(0.25))
-        model.add(Conv2D(32, kernel_size=3, strides=2, padding="same"))
+        model.add(Conv2D(units, kernel_size=3, strides=2, input_shape=self.img_shape, padding="same"))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(Dropout(dropout))
+        model.add(Conv2D(units*2, kernel_size=3, strides=2, padding="same"))
         model.add(ZeroPadding2D(padding=((0,1),(0,1))))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(0.25))
-        model.add(Conv2D(64, kernel_size=3, strides=2, padding="same"))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(0.25))
-        model.add(Conv2D(128, kernel_size=3, strides=1, padding="same"))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(0.25))
+        model.add(BatchNormalization(momentum=momentum))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(Dropout(dropout))
+        model.add(Conv2D(units*4, kernel_size=3, strides=2, padding="same"))
+        model.add(BatchNormalization(momentum=momentum))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(Dropout(dropout))
+        model.add(Conv2D(units*8, kernel_size=3, strides=1, padding="same"))
+        model.add(BatchNormalization(momentum=momentum))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(Dropout(dropout))
         model.add(Flatten())
         model.add(Dense(1))
 

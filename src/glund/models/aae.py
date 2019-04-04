@@ -1,5 +1,7 @@
 from __future__ import print_function, division
 
+from glund.models.optimizer import optimizer
+
 from keras.datasets import mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout, multiply
 from keras.layers import BatchNormalization, Activation, Embedding
@@ -16,22 +18,26 @@ import math
 import numpy as np
 
 class AdversarialAutoencoder():
-    def __init__(self, length=28*28, latent_dim=100):
+    def __init__(self, hps, length=28*28):
         self.length = length
         self.shape = (self.length,)
-        self.latent_dim = latent_dim
+        self.latent_dim = hps['latdim']
 
-        optimizer = Adam(0.0002, 0.5)
-
+        #opt = Adam(0.0002, 0.5)
+        opt = optimizer(hps)
+        
         # Build and compile the discriminator
-        self.discriminator = self.build_discriminator()
+        self.discriminator = self.build_discriminator(units=hps['nn_smallest_unit'],
+                                                      alpha=hps['nn_alpha'])
         self.discriminator.compile(loss='binary_crossentropy',
-            optimizer=optimizer,
-            metrics=['accuracy'])
+                                   optimizer=opt,
+                                   metrics=['accuracy'])
 
         # Build the encoder / decoder
-        self.encoder = self.build_encoder()
-        self.decoder = self.build_decoder()
+        self.encoder = self.build_encoder(units=hps['nn_smallest_unit'],
+                                          alpha=hps['nn_alpha'])
+        self.decoder = self.build_decoder(units=hps['nn_smallest_unit'],
+                                          alpha=hps['nn_alpha'])
 
         img = Input(shape=self.shape)
         # The generator takes the image, encodes it and reconstructs it
@@ -48,19 +54,19 @@ class AdversarialAutoencoder():
         # The adversarial_autoencoder model  (stacked generator and discriminator)
         self.adversarial_autoencoder = Model(img, [reconstructed_img, validity])
         self.adversarial_autoencoder.compile(loss=['mse', 'binary_crossentropy'],
-            loss_weights=[0.999, 0.001],
-            optimizer=optimizer)
+                                             loss_weights=[0.999, 0.001],
+                                             optimizer=opt)
 
 
-    def build_encoder(self):
+    def build_encoder(self, units=256, alpha=0.2):
         # Encoder
 
         img = Input(shape=self.shape)
 
-        h = Dense(512)(img)
-        h = LeakyReLU(alpha=0.2)(h)
-        h = Dense(512)(h)
-        h = LeakyReLU(alpha=0.2)(h)
+        h = Dense(units*2)(img)
+        h = LeakyReLU(alpha=alpha)(h)
+        h = Dense(units*2)(h)
+        h = LeakyReLU(alpha=alpha)(h)
         mu = Dense(self.latent_dim)(h)
         log_var = Dense(self.latent_dim)(h)
 
@@ -74,14 +80,14 @@ class AdversarialAutoencoder():
 
         return Model(img, latent_repr)
 
-    def build_decoder(self):
+    def build_decoder(self, units=256, alpha=0.2):
 
         model = Sequential()
 
-        model.add(Dense(512, input_dim=self.latent_dim))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(512))
-        model.add(LeakyReLU(alpha=0.2))
+        model.add(Dense(units*2, input_dim=self.latent_dim))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(Dense(units*2))
+        model.add(LeakyReLU(alpha=alpha))
         model.add(Dense(self.length, activation='tanh'))
 
         model.summary()
@@ -91,14 +97,14 @@ class AdversarialAutoencoder():
 
         return Model(z, img)
 
-    def build_discriminator(self):
+    def build_discriminator(self, units=256, alpha=0.2):
 
         model = Sequential()
 
-        model.add(Dense(512, input_dim=self.latent_dim))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(256))
-        model.add(LeakyReLU(alpha=0.2))
+        model.add(Dense(units*2, input_dim=self.latent_dim))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(Dense(units))
+        model.add(LeakyReLU(alpha=alpha))
         model.add(Dense(1, activation="sigmoid"))
         model.summary()
 

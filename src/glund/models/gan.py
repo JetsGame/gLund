@@ -1,31 +1,32 @@
-import numpy as np
+from glund.models.optimizer import optimizer
 from keras.datasets import mnist
 from keras import Sequential
 from keras.layers import Dense, LeakyReLU, BatchNormalization, Reshape
-from keras.optimizers import Adam, RMSprop
 import matplotlib.pyplot as plt
+import numpy as np
 import math
 
 
 class GAN(object):
 
-    def __init__(self, length=28*28, latent_dim=100):
+    def __init__(self, hps, length=28*28):
         self.length = length
         self.shape  = (self.length,)
-        self.latent_dim = latent_dim
+        self.latent_dim = hps['latdim']
 
         # optimizer
-        self.optimizer = Adam(lr=0.0002, decay=8e-9)
-        #self.optimizer = RMSprop()
+        #opt = Adam(lr=0.0002, decay=8e-9)
+        opt = optimizer(hps)
 
         # allocate generator and discriminant
-        self.generator = self.build_generator()
-        self.generator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
-        self.discriminator = self.build_discriminator()
-        self.discriminator.compile(loss='binary_crossentropy', optimizer=self.optimizer, metrics=['accuracy'])
+        self.generator = self.build_generator(units=hps['nn_smallest_unit'],
+                                              alpha=hps['nn_alpha'], momentum=hps['nn_momentum'])
+        self.generator.compile(loss='binary_crossentropy', optimizer=opt)
+        self.discriminator = self.build_discriminator(units=hps['nn_smallest_unit'], alpha=hps['nn_alpha'])
+        self.discriminator.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 
         self.adversarial_model = self.ad_model()
-        self.adversarial_model.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        self.adversarial_model.compile(loss='binary_crossentropy', optimizer=opt)
 
     def train(self, x, epochs=10000, batch_size=32, save_interval=None):
         """The train method"""
@@ -53,28 +54,28 @@ class GAN(object):
             if save_interval and ite % save_interval == 0 : 
                 self.plot_images(step=ite)
 
-    def build_generator(self):
+    def build_generator(self, units=256, alpha=0.2, momentum=0.8):
         """The GAN generator"""
         model = Sequential()
-        model.add(Dense(256, input_shape=(self.latent_dim,)))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Dense(512))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Dense(1024))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(BatchNormalization(momentum=0.8))
+        model.add(Dense(units, input_shape=(self.latent_dim,)))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(BatchNormalization(momentum=momentum))
+        model.add(Dense(units*2))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(BatchNormalization(momentum=momentum))
+        model.add(Dense(units*4))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(BatchNormalization(momentum=momentum))
         model.add(Dense(self.length, activation='tanh'))
         return model
 
-    def build_discriminator(self):
+    def build_discriminator(self, units=256, alpha=0.2):
         """The GAN discriminator"""
         model = Sequential()
-        model.add(Dense(512, input_shape=self.shape))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(256))
-        model.add(LeakyReLU(alpha=0.2))
+        model.add(Dense(units*2, input_shape=self.shape))
+        model.add(LeakyReLU(alpha=alpha))
+        model.add(Dense(units))
+        model.add(LeakyReLU(alpha=alpha))
         model.add(Dense(1, activation='sigmoid'))
         model.summary()
         return model

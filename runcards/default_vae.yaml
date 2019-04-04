@@ -39,10 +39,9 @@ deterministic: false
 # Optimizer parameters
 # options are: Adam, RMSprop, Adagrad, SGD
 optimizer: Adam
-learning_rate: 0.0002
-opt_decay: 0.000000008 # => 8e-9
+learning_rate: 0.0003
+opt_beta1: 0.9
 
-# GAN architecture parameters
-nn_smallest_unit: 256
-nn_alpha: 0.2
-nn_momentum: 0.8
+# VAE architecture parameters
+mse_loss: false
+nn_interm_dim: 512

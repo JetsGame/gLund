@@ -1,18 +1,8 @@
-'''Example of VAE on MNIST dataset using MLP
-The VAE has a modular design. The encoder, decoder and VAE
-are 3 models that share weights. After training the VAE model,
-the encoder can be used to generate latent vectors.
-The decoder can be used to generate MNIST digits by sampling the
-latent vector from a Gaussian distribution with mean = 0 and std = 1.
-# Reference
-[1] Kingma, Diederik P., and Max Welling.
-"Auto-Encoding Variational Bayes."
-https://arxiv.org/abs/1312.6114
-'''
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+
+from glund.models.optimizer import optimizer
 
 from keras.layers import Lambda, Input, Dense
 from keras.models import Model
@@ -20,7 +10,6 @@ from keras.datasets import mnist
 from keras.losses import mse, binary_crossentropy
 from keras.utils import plot_model
 from keras import backend as K
-from keras.optimizers import Adam
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -46,18 +35,18 @@ def sampling(args):
 
 class VAE(object):
 
-    def __init__(self, length=28*28, latent_dim=100, mse_loss=False):
+    def __init__(self, hps, length=28*28):
         self.length = length
-        self.latent_dim = latent_dim
-        self.intermediate_dim = 512
+        self.latent_dim = hps['latdim']
+        self.intermediate_dim = hps['nn_interm_dim']
         self.shape = (self.length,)
-        self.mse_loss = mse_loss
+        self.mse_loss = hps['mse_loss']
         # VAE model = encoder + decoder
-        self.build_VAE()
+        self.build_VAE(hps)
         # set up everything
         
         
-    def build_VAE(self):
+    def build_VAE(self, hps):
         # build encoder model
         inputs = Input(shape=self.shape, name='encoder_input')
         x = Dense(self.intermediate_dim, activation='relu')(inputs)
@@ -102,8 +91,9 @@ class VAE(object):
         kl_loss *= -0.5
         vae_loss = K.mean(reconstruction_loss + kl_loss)
         vae.add_loss(vae_loss)
-        optimizer = Adam(0.0003, 0.9)
-        vae.compile(optimizer=optimizer)
+        #opt = Adam(0.0003, 0.9)
+        opt = optimizer(hps)
+        vae.compile(optimizer=opt)
         # vae.compile(optimizer='adam')
         vae.summary()
         # plot_model(vae,to_file='vae_mlp.png',show_shapes=True)

@@ -2,7 +2,7 @@
 from glund.read_data import Jets
 from glund.JetTree import JetTree, LundImage
 from glund.tools import loss_calc
-from glund.model import *
+from glund.model import build_model
 from glund.preprocess import PreprocessPCA, PreprocessZCA
 import matplotlib.pyplot as plt
 import numpy as np
@@ -101,22 +101,7 @@ def main():
         img_train = img_train.reshape(-1, setup['npx']*setup['npx'])
 
     # now set up the model
-    if input_model == 'wgan':
-        model = WGAN(width=setup['npx'], height=setup['npx'], latent_dim=setup['latdim'])
-    elif input_model == 'wgangp':
-        model = WGANGP(width=setup['npx'], height=setup['npx'], latent_dim=setup['latdim'])
-    elif input_model == 'vae':
-        model = VAE(length=(img_train.shape[1]), latent_dim=setup['latdim'], mse_loss=False)
-    elif input_model == 'dcgan':
-        model = DCGAN(width=setup['npx'], height=setup['npx'], latent_dim=setup['latdim'])
-    elif input_model == 'gan':
-        model = GAN(length=(img_train.shape[1]), latent_dim=setup['latdim'])
-    elif input_model == 'bgan':
-        model = BGAN(length=(img_train.shape[1]), latent_dim=setup['latdim'])
-    elif input_model == 'lsgan':
-        model = LSGAN(length=(img_train.shape[1]), latent_dim=setup['latdim'])
-    elif input_model == 'aae':
-        model = AdversarialAutoencoder(length=(img_train.shape[1]), latent_dim=setup['latdim'])
+    model = build_model(input_model, setup, length=(img_train.shape[1]))
 
     # train on the images
     model.train(img_train, epochs=setup['epochs'],
