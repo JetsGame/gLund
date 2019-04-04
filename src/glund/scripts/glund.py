@@ -76,7 +76,7 @@ def main():
 
     if not setup['deterministic']:
         # now reformat the training set as its average over n elements
-        batch_averaged_img = np.zeros((setup['nev'], setup['npx'], setup['npx'], 1))
+        batch_averaged_img = np.zeros((len(img_train), setup['npx'], setup['npx'], 1))
         for i in range(setup['nev']):
             batch_averaged_img[i] = \
                 np.average(img_train[np.random.choice(img_train.shape[0], setup['navg'],
