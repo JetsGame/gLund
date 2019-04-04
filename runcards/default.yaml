@@ -1,0 +1,37 @@
+# data set on which to train, available options:
+# path to json contains jet events
+# mnist: uses the MNIST data set for testing
+data: ../data/valid/valid_QCD_500GeV.json.gz
+
+# Number of events
+nev: -1 # -1 = all data
+
+# Select model, available options are:
+# gan, dcgan, wgan, wgangp, vae, aae, bgan, lsgan
+model: gan
+
+# Number of epochs
+epochs: 1000
+
+# Batch size
+batch_size: 32
+
+# Number of generated events
+ngen: 5000
+
+# Number of latent dimensions
+latdim: 100
+
+# Number of pixels
+npx: 28
+
+# Perform PCA preprocessing
+pca: true
+pca_fraction: 0.95
+
+# Perform ZCA preprocessing
+zca: false
+
+# Number of pixel average
+navg: 4
+deterministic: false

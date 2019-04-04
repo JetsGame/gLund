@@ -1,8 +1,8 @@
-from autoencoder import Autoencoder
+from glund.autoencoder import Autoencoder
 from abc import ABC, abstractmethod
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from tools import zca_whiten
+from glund.tools import zca_whiten
 import numpy as np
 
 class Preprocess(ABC):
