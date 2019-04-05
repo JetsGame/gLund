@@ -1,16 +1,38 @@
 # This file is part of gLund by S. Carrazza and F. A. Dreyer
 
 """glund.py: the entry point for glund."""
-
+import keras.backend as K
 from glund.read_data import Jets
 from glund.JetTree import JetTree, LundImage
 from glund.tools import loss_calc
 from glund.model import build_model
 from glund.preprocess import build_preprocessor
+from hyperopt import fmin, tpe, hp, Trials, space_eval, STATUS_OK
+from hyperopt.mongoexp import MongoTrials
 import matplotlib.pyplot as plt
 import numpy as np
-import argparse, os, shutil, sys, datetime
-import yaml
+from time import time
+import argparse, os, shutil, sys, datetime, yaml, pprint, pickle
+
+
+#----------------------------------------------------------------------
+def run_hyperparameter_scan(search_space, max_evals, cluster, folder):
+    """Running hyperparameter scan using hyperopt"""
+    print('[+] Performing hyperparameter scan...')
+    if cluster:
+        trials = MongoTrials(cluster, exp_key='exp1')
+    else:
+        trials = Trials()
+    best = fmin(build_and_train_model, search_space, algo=tpe.suggest, 
+                max_evals=max_evals, trials=trials)
+    best_setup = space_eval(search_space, best)
+    print('\n[+] Best scan setup:')
+    pprint.pprint(best_setup)
+    log = '%s/hyperopt_log_{}.pickle'.format(time()) % folder
+    with open(log, 'wb') as wfp:
+        print(f'[+] Saving trials in {log}')
+        pickle.dump(trials.trials, wfp)
+    return best_setup
 
 
 #----------------------------------------------------------------------
@@ -18,37 +40,21 @@ def load_yaml(runcard_file):
     """Loads yaml runcard"""
     with open(runcard_file, 'r') as stream:
         runcard = yaml.load(stream)
+    for key, value in runcard.items():
+        if 'hp.' in str(value):
+            runcard[key] = eval(value)
     return runcard
 
 
-#----------------------------------------------------------------------
-def main():
-    """Parsing command line arguments"""
-    parser = argparse.ArgumentParser(description='Train a generative model.')
-    parser.add_argument('runcard', action='store', type=str,
-                        help='A yaml file with the setup.')
-    parser.add_argument('--output', '-o', type=str, required=True, 
-                        help='The output folder')
-    parser.add_argument('--force', '-f', action='store_true', dest='force',
-                        help='Overwrite existing files if present.')
-    args = parser.parse_args()
 
-    # check input is coherent
-    if not os.path.isfile(args.runcard):
-        raise ValueError('Invalid runcard: not a file.')
-    if args.force:
-        print('WARNING: Running with --force option will overwrite existing model.')
-
-    # load runcard
-    setup = load_yaml(args.runcard)
+def build_and_train_model(setup):
+    """Training model"""
+    print('[+] Training model')
+    K.clear_session()
     input_model = setup['model']
-
-    # check that input is valid
     if input_model not in ('gan', 'dcgan', 'wgan', 'wgangp', 'vae',
                            'aae', 'bgan', 'lsgan'):
         raise ValueError('Invalid input: choose one model at a time.')
-    if os.path.exists(args.output) and not args.force:
-        raise Exception(f'{args.output} already exists, use "--force" to overwrite.')
 
     # read in the data set
     if setup['data'] is 'mnist':
@@ -120,7 +126,43 @@ def main():
                 gen_sample[i]=0.0
             else:
                 gen_sample[i]=1.0
-        
+
+    # for loss function, define epsilon and retransform the training sample
+    epsilon=0.5
+    # get reference sample and generated sample for tests
+    ref_sample = img_data.reshape(img_data.shape[0],setup['npx'],setup['npx'])\
+        [np.random.choice(img_data.shape[0], len(gen_sample), replace=True), :]
+
+    loss = loss_calc(gen_sample,ref_sample,epsilon)
+    if setup['scan']:
+        res = {'loss': loss, 'status': STATUS_OK}
+    else:
+        res = model, gen_sample, loss
+    return res
+
+
+#----------------------------------------------------------------------
+def main():
+    """Parsing command line arguments"""
+    parser = argparse.ArgumentParser(description='Train a generative model.')
+    parser.add_argument('runcard', action='store', type=str,
+                        help='A yaml file with the setup.')
+    parser.add_argument('--output', '-o', type=str, required=True, 
+                        help='The output folder')
+    parser.add_argument('--force', '-f', action='store_true', dest='force',
+                        help='Overwrite existing files if present.')
+    parser.add_argument('--hyperopt', default=None, type=int,
+                        help='Enable hyperopt scan.')
+    parser.add_argument('--cluster', default=None, 
+                        type=str, help='Enable cluster scan.')
+    args = parser.parse_args()
+
+    # check input is coherent
+    if not os.path.isfile(args.runcard):
+        raise ValueError('Invalid runcard: not a file.')
+    if args.force:
+        print('WARNING: Running with --force option will overwrite existing model.')
+
     # prepare the output folder
     if not os.path.exists(args.output):
         os.mkdir(args.output)
@@ -131,11 +173,18 @@ def main():
         raise Exception(f'{args.output} already exists, use "--force" to overwrite.')
     folder = args.output.strip('/')
 
-    # for loss function, define epsilon and retransform the training sample
-    epsilon=0.5
-    # get reference sample and generated sample for tests
-    ref_sample = img_data.reshape(img_data.shape[0],setup['npx'],setup['npx'])\
-        [np.random.choice(img_data.shape[0], len(gen_sample), replace=True), :]
+    # load runcard
+    setup = load_yaml(args.runcard)
+    
+    if args.hyperopt:
+        setup['scan'] = True
+        setup = run_hyperparameter_scan(setup, args.hyperopt, 
+                                        args.cluster, folder)
+    setup['scan'] = False
+    
+    print('[+] Training best model:')
+    # build and train the model
+    model, gen_sample, loss = build_and_train_model(setup)
 
     # write out a file with basic information on the run
     with open('%s/info.txt' % folder,'w') as f:
@@ -143,7 +192,7 @@ def main():
         print('# created on %s with the command:'
               % datetime.datetime.utcnow(), file=f)
         print('# '+' '.join(sys.argv), file=f)
-        print('# loss = %f' % loss_calc(gen_sample,ref_sample,epsilon), file=f)
+        print('# loss = %f' % loss, file=f)
 
     # save the model to file
     model.save(folder)
@@ -153,3 +202,5 @@ def main():
     np.save(genfn, gen_sample)
     plt.imshow(np.average(gen_sample, axis=0))
     plt.savefig('%s/average_image.png' % folder)
+
+    
