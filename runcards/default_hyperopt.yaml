@@ -11,7 +11,7 @@ nev: -1 # -1 = all data
 model: gan
 
 # Number of epochs
-epochs: hp.choice('epochs', [10, 20])
+epochs: hp.choice('epochs', [1000, 2000])
 
 # Batch size
 batch_size: 32
