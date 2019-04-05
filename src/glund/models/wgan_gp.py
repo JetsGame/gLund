@@ -2,8 +2,6 @@
 # adapted from: github.com/eriklindernoren/Keras-GAN/tree/master/wgan
 # and from github.com/keras-team/keras-contrib/blob/master/examples
 
-from __future__ import print_function, division
-
 from glund.models.optimizer import build_optimizer
 
 from keras.datasets import mnist

@@ -1,20 +1,13 @@
 # This file is part of gLund by S. Carrazza and F. A. Dreyer
 # adapted from: github.com/eriklindernoren/Keras-GAN/tree/master/dcgan
 
-from __future__ import print_function, division
-
 from glund.models.optimizer import build_optimizer
 
-from keras.datasets import mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout
 from keras.layers import BatchNormalization, Activation, ZeroPadding2D
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Sequential, Model
-
-import matplotlib.pyplot as plt
-
-import sys
 
 import numpy as np
 

@@ -127,13 +127,11 @@ def build_and_train_model(setup):
             else:
                 gen_sample[i]=1.0
 
-    # for loss function, define epsilon and retransform the training sample
-    epsilon=0.5
     # get reference sample and generated sample for tests
     ref_sample = img_data.reshape(img_data.shape[0],setup['npx'],setup['npx'])\
         [np.random.choice(img_data.shape[0], len(gen_sample), replace=True), :]
 
-    loss = loss_calc(gen_sample,ref_sample,epsilon)
+    loss = loss_calc(gen_sample,ref_sample)
     if setup['scan']:
         res = {'loss': loss, 'status': STATUS_OK}
     else:

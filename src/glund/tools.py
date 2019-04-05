@@ -3,7 +3,7 @@
 import numpy as np
 
 #----------------------------------------------------------------------
-def loss_calc(imgs_gen, imgs_ref, epsilon):
+def loss_calc(imgs_gen, imgs_ref):
     """
     Calculate a loss function by comparing a set of generated 
     images with a reference sample.

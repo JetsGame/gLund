@@ -1,19 +1,14 @@
 # This file is part of gLund by S. Carrazza and F. A. Dreyer
 # adapted from: github.com/eriklindernoren/Keras-GAN/tree/master/lsgan
 
-from __future__ import print_function, division
-
 from glund.models.optimizer import build_optimizer
 
-from keras.datasets import mnist
-from keras.layers import Input, Dense, Reshape, Flatten, Dropout
-from keras.layers import BatchNormalization, Activation
+from keras.layers import Input, Dense
+from keras.layers import BatchNormalization
 from keras.layers.advanced_activations import LeakyReLU
 from keras.models import Sequential, Model
 
-import matplotlib.pyplot as plt
 import numpy as np
-import sys, math
 
 
 #======================================================================

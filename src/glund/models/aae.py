@@ -1,23 +1,14 @@
 # This file is part of gLund by S. Carrazza and F. A. Dreyer
 # adapted from: github.com/eriklindernoren/Keras-GAN/blob/master/aae
 
-from __future__ import print_function, division
-
 from glund.models.optimizer import build_optimizer
 
-from keras.datasets import mnist
-from keras.layers import Input, Dense, Reshape, Flatten, Dropout, multiply
-from keras.layers import BatchNormalization, Activation, Embedding
+from keras.layers import Input, Dense
 from keras.layers import Lambda
 from keras.layers.advanced_activations import LeakyReLU
 from keras.models import Sequential, Model
-from keras.optimizers import Adam
-from keras import losses
-from keras.utils import to_categorical
 import keras.backend as K
 
-import matplotlib.pyplot as plt
-import math
 import numpy as np
 
 #======================================================================
@@ -160,26 +151,6 @@ class AdversarialAutoencoder():
     def generate(self, nev):
         z = np.random.normal(size=(nev, self.latent_dim))
         return self.decoder.predict(z)
-    
-    #----------------------------------------------------------------------
-    def sample_images(self, epoch):
-        r, c = 5, 5
-        npx = int(math.sqrt(self.length))
-
-        z = np.random.normal(size=(r*c, self.latent_dim))
-        gen_imgs = self.decoder.predict(z).reshape(r*c, npx, npx, 1)
-
-        gen_imgs = 0.5 * gen_imgs + 0.5
-
-        fig, axs = plt.subplots(r, c)
-        cnt = 0
-        for i in range(r):
-            for j in range(c):
-                axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
-                axs[i,j].axis('off')
-                cnt += 1
-        fig.savefig("images/mnist_%d.png" % epoch)
-        plt.close()
 
     #----------------------------------------------------------------------
     def load(self, folder):

@@ -3,7 +3,6 @@
 
 from keras.layers import Input, Dense
 from keras.models import Model
-from keras.datasets import mnist
 from keras import backend as K
 
 #======================================================================
@@ -42,7 +41,7 @@ class Autoencoder:
         self.autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
 
     #----------------------------------------------------------------------
-    def train(self, X_train, epochs, batch_size=128, sample_interval=None):
+    def train(self, X_train, epochs, batch_size=128):
         # autoencode the model
         self.autoencoder.fit(X_train, X_train, epochs=epochs,
                              batch_size=batch_size, shuffle=True)

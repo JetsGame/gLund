@@ -2,20 +2,13 @@
 # adapted from: github.com/eriklindernoren/Keras-GAN/tree/master/bgan
 # and from wiseodd.github.io/techblog/2017/03/07/boundary-seeking-gan
 
-from __future__ import print_function, division
-
 from glund.models.optimizer import build_optimizer
 
-from keras.datasets import mnist
-from keras.layers import Input, Dense, Reshape, Flatten, Dropout
-from keras.layers import BatchNormalization, Activation
+from keras.layers import Input, Dense
+from keras.layers import BatchNormalization
 from keras.layers.advanced_activations import LeakyReLU
 from keras.models import Sequential, Model
 import keras.backend as K
-
-import matplotlib.pyplot as plt
-
-import sys, math
 
 import numpy as np
 
@@ -70,7 +63,6 @@ class BGAN():
         model.add(LeakyReLU(alpha=alpha))
         model.add(BatchNormalization(momentum=momentum))
         model.add(Dense(self.length, activation='tanh'))
-        # model.add(Reshape(self.img_shape))
 
         model.summary()
 
@@ -84,7 +76,6 @@ class BGAN():
 
         model = Sequential()
 
-        #model.add(Flatten(input_shape=self.shape))
         model.add(Dense(units*2, input_shape=self.shape))
         model.add(LeakyReLU(alpha=alpha))
         model.add(Dense(units))

@@ -2,12 +2,11 @@
 # adapted from: github.com/eriklindernoren/Keras-GAN/tree/master/gan
 
 from glund.models.optimizer import build_optimizer
-from keras.datasets import mnist
+
 from keras import Sequential
-from keras.layers import Dense, LeakyReLU, BatchNormalization, Reshape
-import matplotlib.pyplot as plt
+from keras.layers import Dense, LeakyReLU, BatchNormalization
+
 import numpy as np
-import math
 
 #======================================================================
 class GAN(object):
