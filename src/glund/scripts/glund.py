@@ -31,7 +31,7 @@ def main():
                         help='Overwrite existing files if present.')
     args = parser.parse_args()
 
-    # check input are coherent
+    # check input is coherent
     if not os.path.isfile(args.runcard):
         raise ValueError('Invalid runcard: not a file.')
     if args.force:
