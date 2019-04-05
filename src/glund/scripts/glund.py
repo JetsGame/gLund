@@ -50,9 +50,6 @@ def main():
     if os.path.exists(args.output) and not args.force:
         raise Exception(f'{args.output} already exists, use "--force" to overwrite.')
 
-    # for GAN or VAE, we want to flatten the input and preprocess it
-    flat_input = input_model in ('gan', 'vae', 'bgan', 'aae', 'lsgan')
-
     # read in the data set
     if setup['data'] is 'mnist':
         from keras.datasets import mnist
