@@ -14,7 +14,7 @@ def loss_calc(imgs_gen, imgs_ref, epsilon):
                      activated pixels in both samples
      - act_var_loss: the difference between variance of the average number
                      of activated pixels in both samples
-    so that L = Δ(<activated pixels>) /50 + σ²(<activated pixels>) / 200 + norm(Δ<image>)
+    so that L = Δ(<activated pixels>)/50 + σ²(<activated pixels>)/200 + norm(Δ<image>)
     where a normalisation of 1/50 and 1/200 is added to the act_avg_loss 
     and act_var_loss respectively
     """
@@ -32,8 +32,8 @@ def loss_calc(imgs_gen, imgs_ref, epsilon):
     act_var_loss = abs(np.var(gen_sum_all)     -     np.var(ref_sum_all)) / 200.0
     img_loss = np.linalg.norm(np.average(imgs_gen,axis=0)-np.average(imgs_ref,axis=0))
     loss  = act_avg_loss + act_var_loss + img_loss
-    
-    print('act_avg:%f\tact_var%f\timg_norm:%f' 
+    print('Total loss: %f' % loss)
+    print('(act_avg: %f\tact_var: %f\timg_norm: %f)' 
           % (act_avg_loss, act_var_loss, img_loss))
     
     return loss
