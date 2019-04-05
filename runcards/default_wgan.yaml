@@ -26,11 +26,10 @@ latdim: 100
 npx: 20
 
 # Perform PCA preprocessing
-pca: true
-pca_fraction: 0.95
+pca: false
 
 # Perform ZCA preprocessing
-zca: false
+zca: true
 
 # Number of pixel average
 navg: 4
