@@ -96,7 +96,7 @@ class LSGAN():
         return Model(img, validity)
 
     #----------------------------------------------------------------------
-    def train(self, X_train, epochs, batch_size=128, sample_interval=None):
+    def train(self, X_train, epochs, batch_size=128):
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -135,34 +135,11 @@ class LSGAN():
                 print ("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]"
                        % (epoch, d_loss[0], 100*d_loss[1], g_loss))
 
-            # If at save interval => save generated image samples
-            if sample_interval and epoch % sample_interval == 0:
-                self.sample_images(epoch)
-
     #----------------------------------------------------------------------
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev, self.latent_dim))
         return self.generator.predict(noise)
     
-    #----------------------------------------------------------------------
-    def sample_images(self, epoch):
-        r, c = 5, 5
-        npixel = int(math.sqrt(self.length))
-        gen_imgs = self.generate(r*c).reshape(r*c,npixel,npixel,1)
-
-        # Rescale images 0 - 1
-        gen_imgs = 0.5 * gen_imgs + 0.5
-
-        fig, axs = plt.subplots(r, c)
-        cnt = 0
-        for i in range(r):
-            for j in range(c):
-                axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
-                axs[i,j].axis('off')
-                cnt += 1
-        fig.savefig("images/mnist_%d.png" % epoch)
-        plt.close()
-
     #----------------------------------------------------------------------
     def load(self, folder):
         """Load GAN from input folder"""

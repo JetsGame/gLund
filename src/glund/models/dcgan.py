@@ -118,7 +118,7 @@ class DCGAN():
         return Model(img, validity)
 
     #----------------------------------------------------------------------
-    def train(self, X_train, epochs, batch_size=128, save_interval=None):
+    def train(self, X_train, epochs, batch_size=128):
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -155,31 +155,11 @@ class DCGAN():
                 print ("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]"
                        % (epoch, d_loss[0], 100*d_loss[1], g_loss))
 
-            # If at save interval => save generated image samples
-            if save_interval and epoch % save_interval == 0:
-                self.save_imgs(epoch)
-
     #----------------------------------------------------------------------
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev, self.latent_dim))
         gen_imgs = self.generator.predict(noise)
         return gen_imgs
-
-    #----------------------------------------------------------------------
-    def save_imgs(self, epoch):
-        r, c = 5, 5
-        gen_imgs = self.generate(r*c)
-        # Rescale images 0 - 1
-        gen_imgs = 0.5 * gen_imgs + 0.5
-        fig, axs = plt.subplots(r, c)
-        cnt = 0
-        for i in range(r):
-            for j in range(c):
-                axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
-                axs[i,j].axis('off')
-                cnt += 1
-        fig.savefig("images/dcgan_%d.png" % epoch)
-        plt.close()
     
     #----------------------------------------------------------------------
     def load(self, folder):

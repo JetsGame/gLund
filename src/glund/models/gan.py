@@ -33,7 +33,7 @@ class GAN(object):
         self.adversarial_model.compile(loss='binary_crossentropy', optimizer=opt)
 
     #----------------------------------------------------------------------
-    def train(self, x, epochs=10000, batch_size=32, save_interval=None):
+    def train(self, x, epochs=10000, batch_size=32):
         """The train method"""
         for ite in range(epochs):
 
@@ -56,8 +56,6 @@ class GAN(object):
             
             if ite%10==0:
                 print ("%d [D loss: %f] [G loss: %f]" % (ite, d_loss[0], g_loss))
-            if save_interval and ite % save_interval == 0 : 
-                self.plot_images(step=ite)
 
     #----------------------------------------------------------------------
     def build_generator(self, units=256, alpha=0.2, momentum=0.8):
@@ -99,24 +97,6 @@ class GAN(object):
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev,self.latent_dim))
         return self.generator.predict(noise)
-
-    #----------------------------------------------------------------------
-    def plot_images(self, samples=16, step=0):
-        filename = f"images/dcgan_{step}.png"
-        npixel = int(math.sqrt(self.length))
-        images = self.generate(samples).reshape(samples,npixel,npixel,1)
-        
-        plt.figure(figsize=(10,10))
-    
-        for i in range(images.shape[0]):
-            plt.subplot(4, 4, i+1)
-            image = images[i, :, :, :]
-            image = np.reshape(image, [npixel, npixel])
-            plt.imshow(image, cmap='binary')
-            plt.axis('off')
-        plt.tight_layout()
-        plt.savefig(filename)
-        plt.close('all')
 
     #----------------------------------------------------------------------
     def load(self, folder):

@@ -11,7 +11,6 @@ from keras.layers import Lambda, Input, Dense
 from keras.models import Model
 from keras.datasets import mnist
 from keras.losses import mse, binary_crossentropy
-from keras.utils import plot_model
 from keras import backend as K
 
 import numpy as np
@@ -69,7 +68,6 @@ class VAE(object):
         # instantiate encoder model
         encoder = Model(inputs, [z_mean, z_log_var, z], name='encoder')
         encoder.summary()
-        # plot_model(encoder, to_file='vae_mlp_encoder.png', show_shapes=True)
         self.encoder = encoder
 
         # build decoder model
@@ -80,7 +78,6 @@ class VAE(object):
         # instantiate decoder model
         decoder = Model(latent_inputs, outputs, name='decoder')
         decoder.summary()
-        # plot_model(decoder, to_file='vae_mlp_decoder.png', show_shapes=True)
         self.decoder = decoder
 
         # instantiate VAE model
@@ -104,7 +101,6 @@ class VAE(object):
         vae.compile(optimizer=opt)
         # vae.compile(optimizer='adam')
         vae.summary()
-        # plot_model(vae,to_file='vae_mlp.png',show_shapes=True)
         self.vae = vae
 
     #----------------------------------------------------------------------
@@ -121,23 +117,6 @@ class VAE(object):
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev, self.latent_dim))
         return self.decoder.predict(noise)
-
-    #----------------------------------------------------------------------
-    def plot_results(self):
-        r, c = 5, 5
-        gen_imgs = self.generate(r*c)
-        # Rescale images 0 - 1
-        npixel = int(math.sqrt(self.length))
-        gen_imgs = gen_imgs.reshape(r*c, npixel, npixel,1)
-        fig, axs = plt.subplots(r, c)
-        cnt = 0
-        for i in range(r):
-                for j in range(c):
-                    axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
-                    axs[i,j].axis('off')
-                    cnt += 1
-                    fig.savefig("images/vae_final.png")
-                    plt.close()
 
     #----------------------------------------------------------------------
     def load(self, folder):

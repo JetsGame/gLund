@@ -127,7 +127,7 @@ class WGAN():
         return Model(img, validity)
 
     #----------------------------------------------------------------------
-    def train(self, X_train, epochs, batch_size=128, sample_interval=None):
+    def train(self, X_train, epochs, batch_size=128):
 
         # Adversarial ground truths
         valid = -np.ones((batch_size, 1))
@@ -172,30 +172,10 @@ class WGAN():
             # Plot the progress
             print ("%d [D loss: %f] [G loss: %f]" % (epoch, 1 - d_loss[0], 1 - g_loss[0]))
 
-            # If at save interval => save generated image samples
-            if sample_interval and epoch % sample_interval == 0:
-                self.sample_images(epoch)
-
     #----------------------------------------------------------------------
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev, self.latent_dim))
         return self.generator.predict(noise)
-
-    #----------------------------------------------------------------------
-    def sample_images(self, epoch):
-        r, c = 5, 5
-        gen_imgs = self.generate(r*c)
-        # Rescale images 0 - 1
-        gen_imgs = 0.5 * gen_imgs + 0.5
-        fig, axs = plt.subplots(r, c)
-        cnt = 0
-        for i in range(r):
-            for j in range(c):
-                axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
-                axs[i,j].axis('off')
-                cnt += 1
-        fig.savefig("images/wgan_%d.png" % epoch)
-        plt.close()
     
     #----------------------------------------------------------------------
     def load(self, folder):

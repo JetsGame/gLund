@@ -122,7 +122,7 @@ class AdversarialAutoencoder():
         return Model(encoded_repr, validity)
 
     #----------------------------------------------------------------------
-    def train(self, X_train, epochs, batch_size=128, sample_interval=None):
+    def train(self, X_train, epochs, batch_size=128):
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
         fake = np.zeros((batch_size, 1))
@@ -155,10 +155,6 @@ class AdversarialAutoencoder():
             # Plot the progress
             print ("%d [D loss: %f, acc: %.2f%%] [G loss: %f, mse: %f]"
                    % (epoch, d_loss[0], 100*d_loss[1], g_loss[0], g_loss[1]))
-
-            # If at save interval => save generated image samples
-            if sample_interval and epoch % sample_interval == 0:
-                self.sample_images(epoch)
 
     #----------------------------------------------------------------------
     def generate(self, nev):
