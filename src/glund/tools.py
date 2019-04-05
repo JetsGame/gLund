@@ -1,3 +1,5 @@
+# This file is part of gLund by S. Carrazza and F. A. Dreyer
+
 import numpy as np
 
 def loss_calc(imgs_gen, imgs_ref, epsilon):

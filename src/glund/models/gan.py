@@ -1,3 +1,6 @@
+# This file is part of gLund by S. Carrazza and F. A. Dreyer
+# adapted from: github.com/eriklindernoren/Keras-GAN/tree/master/gan
+
 from glund.models.optimizer import optimizer
 from keras.datasets import mnist
 from keras import Sequential

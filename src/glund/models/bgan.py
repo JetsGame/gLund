@@ -1,3 +1,7 @@
+# This file is part of gLund by S. Carrazza and F. A. Dreyer
+# adapted from: github.com/eriklindernoren/Keras-GAN/tree/master/bgan
+# and from wiseodd.github.io/techblog/2017/03/07/boundary-seeking-gan
+
 from __future__ import print_function, division
 
 from glund.models.optimizer import optimizer
@@ -16,7 +20,6 @@ import sys, math
 import numpy as np
 
 class BGAN():
-    """Reference: https://wiseodd.github.io/techblog/2017/03/07/boundary-seeking-gan/"""
     def __init__(self, hps, length=28*28):
         self.length = length
         self.shape = (self.length, )

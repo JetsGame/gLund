@@ -1,3 +1,5 @@
+# This file is part of gLund by S. Carrazza and F. A. Dreyer
+
 from glund.models.lsgan import LSGAN
 from glund.models.gan import GAN
 from glund.models.bgan import BGAN

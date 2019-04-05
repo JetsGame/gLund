@@ -1,4 +1,6 @@
-from glund.autoencoder import Autoencoder
+# This file is part of gLund by S. Carrazza and F. A. Dreyer
+
+from glund.models.autoencoder import Autoencoder
 from abc import ABC, abstractmethod
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA

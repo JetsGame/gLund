@@ -1,3 +1,5 @@
+# This file is part of gLund by S. Carrazza and F. A. Dreyer
+
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from glund.read_data import Jets 

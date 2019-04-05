@@ -1,3 +1,6 @@
+# This file is part of gLund by S. Carrazza and F. A. Dreyer
+# adapted from: github.com/snatch59/keras-autoencoders
+
 from keras.layers import Input, Dense
 from keras.models import Model
 from keras.datasets import mnist

@@ -1,3 +1,5 @@
+# This file is part of gLund by S. Carrazza and F. A. Dreyer
+
 from keras.datasets import mnist
 from glund.read_data import Jets
 from glund.JetTree import JetTree, LundImage

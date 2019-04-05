@@ -1,3 +1,6 @@
+# This file is part of gLund by S. Carrazza and F. A. Dreyer
+# adapted from: github.com/keras-team/keras/blob/master/examples
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function

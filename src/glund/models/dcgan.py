@@ -1,3 +1,6 @@
+# This file is part of gLund by S. Carrazza and F. A. Dreyer
+# adapted from: github.com/eriklindernoren/Keras-GAN/tree/master/dcgan
+
 from __future__ import print_function, division
 
 from glund.models.optimizer import optimizer
