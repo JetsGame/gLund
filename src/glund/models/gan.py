@@ -135,13 +135,3 @@ class GAN(object):
     def description(self):
         return 'GAN with length=%i, latent_dim=%i' % (self.length, self.latent_dim)
 
-        
-#----------------------------------------------------------------------
-if __name__ == '__main__':    
-    # Load the dataset
-    (X_train, _), (_, _) = mnist.load_data()
-    # Rescale -1 to 1
-    X_train = X_train / 127.5 - 1.
-    X_train = X_train.reshape(X_train.shape[0], X_train.shape[1]*X_train.shape[2])
-    gan = GAN()
-    gan.train(X_train, epochs=4000, batch_size=32, save_interval=50)

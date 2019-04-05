@@ -182,13 +182,3 @@ class LSGAN():
             % (self.length, self.latent_dim)
         return descrip
 
-
-#----------------------------------------------------------------------
-if __name__ == '__main__':
-    # Load the dataset
-    (X_train, _), (_, _) = mnist.load_data()
-    # Rescale -1 to 1
-    X_train = (X_train.astype(np.float32) - 127.5) / 127.5
-    X_train = X_train.reshape(X_train.shape[0], X_train.shape[1]*X_train.shape[2])
-    gan = LSGAN()
-    gan.train(X_train, epochs=30000, batch_size=32, sample_interval=200)

@@ -158,18 +158,3 @@ class VAE(object):
             % (self.length, self.latent_dim, self.mse_loss)
         return descrip
     
-
-#----------------------------------------------------------------------
-if __name__ == '__main__':
-    
-    # MNIST dataset
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_train = x_train.astype('float32') / 255
-    x_test = x_test.astype('float32') / 255
-    vae = VAE()    
-    # vae.vae.load_weights('vae_mlp_mnist.h5')
-    # train the autoencoder
-    vae.train(x_train, epochs=1000, batch_size=128)
-    # vae.vae.save_weights('vae_mlp_mnist.h5')
-
-    vae.plot_results()

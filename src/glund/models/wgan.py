@@ -215,15 +215,3 @@ class WGAN():
         descrip = 'WGAN with width=%i, height=%i, latent_dim=%i'\
             % (self.img_rows, self.img_cols, self.latent_dim)
         return descrip
-
-
-#----------------------------------------------------------------------
-if __name__ == '__main__':
-    # Load the dataset
-    (X_train, _), (_, _) = mnist.load_data()
-    # Rescale -1 to 1
-    X_train = (X_train.astype(np.float32) - 127.5) / 127.5
-    X_train = np.expand_dims(X_train, axis=3)
-    # set up the WGAN
-    wgan = WGAN()
-    wgan.train(X_train, epochs=4000, batch_size=32, sample_interval=50)
