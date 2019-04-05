@@ -52,46 +52,50 @@ def main():
 
     # read in the data set
     if setup['data'] is 'mnist':
+        print('[+] Loading mnist data')
         from keras.datasets import mnist
         # for debugging purposes, we have the option of loading in the
         # mnist data and training the model on this.
-        (img_train, _), (_, _) = mnist.load_data()
+        (img_data, _), (_, _) = mnist.load_data()
         # Rescale -1 to 1
         if input_model is not 'vae':
-            img_train = (img_train.astype(np.float32) - 127.5) / 127.5
+            img_data = (img_data.astype(np.float32) - 127.5) / 127.5
         else:
-            img_train = img_train.astype('float32') / 255
-        img_train = np.expand_dims(img_train, axis=3)
+            img_data = img_data.astype('float32') / 255
+        img_data = np.expand_dims(img_data, axis=3)
     else:
         # load in the jets from file, and create an array of lund images
+        print('[+] Reading jet data from file')
         reader=Jets(setup['data'], setup['nev'])
         events=reader.values()
-        img_train=np.zeros((len(events), setup['npx'], setup['npx'], 1))
+        img_data=np.zeros((len(events), setup['npx'], setup['npx'], 1))
         if setup['deterministic']:
             li_gen = LundImage(npxlx = setup['npx'])
         else:
             li_gen=LundImage(npxlx = setup['npx'], norm_to_one=True) 
         for i, jet in enumerate(events): 
             tree = JetTree(jet) 
-            img_train[i]=li_gen(tree).reshape(setup['npx'], setup['npx'], 1)
+            img_data[i]=li_gen(tree).reshape(setup['npx'], setup['npx'], 1)
 
     if not setup['deterministic']:
         # now reformat the training set as its average over n elements
-        nev = max(len(img_train),setup['nev'])
+        nev = max(len(img_data),setup['nev'])
         batch_averaged_img = np.zeros((nev, setup['npx'], setup['npx'], 1))
         for i in range(nev):
             batch_averaged_img[i] = \
-                np.average(img_train[np.random.choice(img_train.shape[0], setup['navg'],
+                np.average(img_data[np.random.choice(img_data.shape[0], setup['navg'],
                                                     replace=False), :], axis=0)
         img_train = batch_averaged_img
-        # img_train=np.array([np.average(img_train[args.navg*i:args.navg*i+args.navg],axis=0)
-        #                     for i in range(len(img_train)//args.navg)])
+    else:
+        img_train = img_data
 
     # set up a preprocessing pipeline
     preprocess = build_preprocessor(input_model, setup)
     
     # prepare the training data for the model training
+    print('[+] Fitting the preprocessor')
     preprocess.fit(img_train)
+
     # NB: for ZCA, the zca factor is set in the process.transform call
     img_train = preprocess.transform(img_train)
     
@@ -99,6 +103,7 @@ def main():
     model = build_model(input_model, setup, length=(img_train.shape[1]))
 
     # train on the images
+    print('[+] Training the generative model')
     model.train(img_train, epochs=setup['epochs'],
                 batch_size = setup['batch_size'])
 
@@ -129,9 +134,8 @@ def main():
     # for loss function, define epsilon and retransform the training sample
     epsilon=0.5
     # get reference sample and generated sample for tests
-    img_train = preprocess.inverse(img_train)
-    ref_sample = img_train.reshape(img_train.shape[0],setup['npx'],setup['npx'])\
-        [np.random.choice(img_train.shape[0], len(gen_sample), replace=True), :]
+    ref_sample = img_data.reshape(img_data.shape[0],setup['npx'],setup['npx'])\
+        [np.random.choice(img_data.shape[0], len(gen_sample), replace=True), :]
 
     # write out a file with basic information on the run
     with open('%s/info.txt' % folder,'w') as f:

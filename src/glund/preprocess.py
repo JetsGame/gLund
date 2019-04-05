@@ -10,9 +10,9 @@ import numpy as np
 def build_preprocessor(input_model, setup):
     flat_input = input_model in ('gan', 'vae', 'bgan', 'aae', 'lsgan')
     if setup['pca']:
-        print('[+] Setting up PCA preprocessing pipeline')
-        if flat_input:
+        if not flat_input:
             raise Exception('build_preprocessor: pca unavailable for this model')
+        print('[+] Setting up PCA preprocessing pipeline')
         preprocess = PreprocessorPCA(setup['pca_fraction'], whiten=False)
     elif setup['zca']:
         print('[+] Setting up ZCA preprocessing pipeline')
@@ -102,7 +102,6 @@ class PreprocessorPCA(Preprocessor):
 
     #----------------------------------------------------------------------
     def _method_fit(self, data):
-        print('PCA fit')
         self.pca.fit(data)
 
     #----------------------------------------------------------------------

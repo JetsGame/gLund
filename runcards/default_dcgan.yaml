@@ -23,7 +23,7 @@ ngen: 5000
 latdim: 100
 
 # Number of pixels
-npx: 28
+npx: 20
 
 # Perform PCA preprocessing
 pca: true
