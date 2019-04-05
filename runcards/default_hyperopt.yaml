@@ -1,0 +1,48 @@
+# data set on which to train, available options:
+# path to json contains jet events
+# mnist: uses the MNIST data set for testing
+data: ../data/valid/valid_QCD_500GeV.json.gz
+
+# Number of events
+nev: -1 # -1 = all data
+
+# Select model, available options are:
+# gan, dcgan, wgan, wgangp, vae, aae, bgan, lsgan
+model: gan
+
+# Number of epochs
+epochs: hp.choice('epochs', [1000, 2000])
+
+# Batch size
+batch_size: 32
+
+# Number of generated events
+ngen: 5000
+
+# Number of latent dimensions
+latdim: 100
+
+# Number of pixels
+npx: hp.choice('npx', [10, 20, 30])
+
+# Perform PCA preprocessing
+pca: true
+pca_fraction: 0.95
+
+# Perform ZCA preprocessing
+zca: false
+
+# Number of pixel average
+navg: 4
+deterministic: false
+
+# Optimizer parameters
+# options are: Adam, RMSprop, Adagrad, SGD
+optimizer: hp.choice('optimizer', ['Adam', 'RMSprop', 'Adagrad'])
+learning_rate: hp.loguniform('learning_rate', -10, 0)
+opt_decay: 0.000000008 # => 8e-9
+
+# GAN architecture parameters
+nn_smallest_unit: 256
+nn_alpha: 0.2
+nn_momentum: 0.8
