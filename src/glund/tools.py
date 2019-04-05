@@ -14,7 +14,7 @@ def loss_calc(imgs_gen, imgs_ref, epsilon):
                      activated pixels in both samples
      - act_var_loss: the difference between variance of the average number
                      of activated pixels in both samples
-    so that L = act_avg_loss + act_var_loss + img_loss
+    so that L = Δ(<activated pixels>) /50 + σ²(<activated pixels>) / 200 + norm(Δ<image>)
     where a normalisation of 1/50 and 1/200 is added to the act_avg_loss 
     and act_var_loss respectively
     """
