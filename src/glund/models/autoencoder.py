@@ -6,12 +6,15 @@ from keras.models import Model
 from keras.datasets import mnist
 from keras import backend as K
 
+#======================================================================
 class Autoencoder:
+    #----------------------------------------------------------------------
     def __init__(self, length=28*28, dim=100):
         self.length = length
         self.dim = dim
         self.build_AE()
 
+    #----------------------------------------------------------------------
     def build_AE(self):
         """Construct an autoencoder"""
         inputs = Input(shape=(self.length,))
@@ -38,6 +41,7 @@ class Autoencoder:
         # and the Adadelta optimizer
         self.autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
 
+    #----------------------------------------------------------------------
     def train(self, X_train, epochs, batch_size=128, sample_interval=None):
         # autoencode the model
         self.autoencoder.fit(X_train, X_train, epochs=epochs,
@@ -46,8 +50,10 @@ class Autoencoder:
         #                      batch_size=batch_size, shuffle=True,
         #                      validation_split=0.1
 
+    #----------------------------------------------------------------------
     def encode(self, image):
         return self.encoder.predict(image.reshape(image.shape[0],self.length))
 
+    #----------------------------------------------------------------------
     def decode(self, encoded_img):
         return self.decoder.predict(encoded_img).reshape(encoded_img.shape[0],self.length)

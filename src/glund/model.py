@@ -9,7 +9,10 @@ from glund.models.wgan import WGAN
 from glund.models.vae import VAE
 from glund.models.aae import AdversarialAutoencoder
 
+#----------------------------------------------------------------------
 def build_model(input_model, setup, length=None):
+    """Return one of the generative models"""
+    length=length if length else setup['npx']**2
     if input_model == 'wgan':
         model = WGAN(setup)
     elif input_model == 'wgangp':

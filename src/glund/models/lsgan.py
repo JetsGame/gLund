@@ -3,7 +3,7 @@
 
 from __future__ import print_function, division
 
-from glund.models.optimizer import optimizer
+from glund.models.optimizer import build_optimizer
 
 from keras.datasets import mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout
@@ -12,19 +12,21 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.models import Sequential, Model
 
 import matplotlib.pyplot as plt
-
+import numpy as np
 import sys, math
 
-import numpy as np
 
+#======================================================================
 class LSGAN():
+
+    #----------------------------------------------------------------------
     def __init__(self, hps, length=28*28):
         self.length = length
         self.shape  = (self.length,)
         self.latent_dim = hps['latent_dim']
 
         # opt =  Adam(0.0002, 0.5)
-        opt = optimizer(hps)
+        opt = build_optimizer(hps)
 
         # Build and compile the discriminator
         self.discriminator = self.build_discriminator(units=hps['nn_smallest_unit'],alpha=hps['nn_alpha'])
@@ -52,6 +54,7 @@ class LSGAN():
         # (!!!) Optimize w.r.t. MSE loss instead of crossentropy
         self.combined.compile(loss='mse', optimizer=opt)
 
+    #----------------------------------------------------------------------
     def build_generator(self, units=256, alpha=0.2, momentum=0.8):
 
         model = Sequential()
@@ -74,6 +77,7 @@ class LSGAN():
 
         return Model(noise, img)
 
+    #----------------------------------------------------------------------
     def build_discriminator(self, units=256, alpha=0.2):
 
         model = Sequential()
@@ -91,6 +95,7 @@ class LSGAN():
 
         return Model(img, validity)
 
+    #----------------------------------------------------------------------
     def train(self, X_train, epochs, batch_size=128, sample_interval=None):
 
         # Adversarial ground truths
@@ -134,10 +139,12 @@ class LSGAN():
             if sample_interval and epoch % sample_interval == 0:
                 self.sample_images(epoch)
 
+    #----------------------------------------------------------------------
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev, self.latent_dim))
         return self.generator.predict(noise)
     
+    #----------------------------------------------------------------------
     def sample_images(self, epoch):
         r, c = 5, 5
         npixel = int(math.sqrt(self.length))
@@ -156,23 +163,27 @@ class LSGAN():
         fig.savefig("images/mnist_%d.png" % epoch)
         plt.close()
 
+    #----------------------------------------------------------------------
     def load(self, folder):
         """Load GAN from input folder"""
         # load the weights from input folder
         self.generator.load_weights('%s/generator.h5'%folder)
         self.discriminator.load_weights('%s/discriminator.h5'%folder)
 
+    #----------------------------------------------------------------------
     def save(self, folder):
         """Save the GAN weights to file."""
         self.generator.save_weights('%s/generator.h5'%folder)
         self.discriminator.save_weights('%s/discriminator.h5'%folder)
         
+    #----------------------------------------------------------------------
     def description(self):
         descrip = 'LSGAN with length=%i, latent_dim=%i'\
             % (self.length, self.latent_dim)
         return descrip
 
 
+#----------------------------------------------------------------------
 if __name__ == '__main__':
     # Load the dataset
     (X_train, _), (_, _) = mnist.load_data()

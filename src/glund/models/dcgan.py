@@ -3,7 +3,7 @@
 
 from __future__ import print_function, division
 
-from glund.models.optimizer import optimizer
+from glund.models.optimizer import build_optimizer
 
 from keras.datasets import mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout
@@ -18,7 +18,9 @@ import sys
 
 import numpy as np
 
+#======================================================================
 class DCGAN():
+    #----------------------------------------------------------------------
     def __init__(self, hps):
         if (hps['npx']%4):
             raise ValueError('WGAN: Width and height need to be divisible by 4.')
@@ -29,7 +31,7 @@ class DCGAN():
         self.latent_dim = hps['latdim']
 
         #opt = Adam(0.0002, 0.5)
-        opt = optimizer(hps)
+        opt = build_optimizer(hps)
         
         # Build and compile the discriminator
         self.discriminator = self.build_discriminator(units=hps['nn_smallest_unit'],
@@ -58,6 +60,7 @@ class DCGAN():
         self.combined = Model(z, valid)
         self.combined.compile(loss='binary_crossentropy', optimizer=opt)
 
+    #----------------------------------------------------------------------
     def build_generator(self, units=32, momentum=0.8):
 
         model = Sequential()
@@ -83,6 +86,7 @@ class DCGAN():
 
         return Model(noise, img)
 
+    #----------------------------------------------------------------------
     def build_discriminator(self, units=32, alpha=0.2, momentum=0.8, dropout=0.25):
 
         model = Sequential()
@@ -113,6 +117,7 @@ class DCGAN():
 
         return Model(img, validity)
 
+    #----------------------------------------------------------------------
     def train(self, X_train, epochs, batch_size=128, save_interval=None):
 
         # Adversarial ground truths
@@ -154,11 +159,13 @@ class DCGAN():
             if save_interval and epoch % save_interval == 0:
                 self.save_imgs(epoch)
 
+    #----------------------------------------------------------------------
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev, self.latent_dim))
         gen_imgs = self.generator.predict(noise)
         return gen_imgs
 
+    #----------------------------------------------------------------------
     def save_imgs(self, epoch):
         r, c = 5, 5
         gen_imgs = self.generate(r*c)
@@ -174,25 +181,28 @@ class DCGAN():
         fig.savefig("images/dcgan_%d.png" % epoch)
         plt.close()
     
+    #----------------------------------------------------------------------
     def load(self, folder):
         """Load GAN from input folder"""
         # load the weights from input folder
         self.generator.load_weights('%s/generator.h5'%folder)
         self.discriminator.load_weights('%s/discriminator.h5'%folder)
 
+    #----------------------------------------------------------------------
     def save(self, folder):
         """Save the GAN weights to file."""
         self.generator.save_weights('%s/generator.h5'%folder)
         self.discriminator.save_weights('%s/discriminator.h5'%folder)
 
+    #----------------------------------------------------------------------
     def description(self):
         descrip = 'DCGAN with width=%i, height=%i, latent_dim=%i'\
             % (self.img_rows, self.img_cols, self.latent_dim)
         return descrip
 
 
-if __name__ == '__main__':
-    
+#----------------------------------------------------------------------
+if __name__ == '__main__':    
     # Load the dataset
     (X_train, _), (_, _) = mnist.load_data()
     # Rescale -1 to 1

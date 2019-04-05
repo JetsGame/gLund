@@ -4,7 +4,7 @@
 
 from __future__ import print_function, division
 
-from glund.models.optimizer import optimizer
+from glund.models.optimizer import build_optimizer
 
 from keras.datasets import mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout
@@ -19,14 +19,16 @@ import sys, math
 
 import numpy as np
 
+#======================================================================
 class BGAN():
+    #----------------------------------------------------------------------
     def __init__(self, hps, length=28*28):
         self.length = length
         self.shape = (self.length, )
         self.latent_dim = hps['latdim']
 
         #optimizer = Adam(0.0002, 0.5)
-        opt = optimizer(hps)
+        opt = build_optimizer(hps)
 
         # Build and compile the discriminator
         self.discriminator = self.build_discriminator(units=hps['nn_smallest_unit'], alpha=hps['nn_alpha'])
@@ -53,6 +55,7 @@ class BGAN():
         self.combined = Model(z, valid)
         self.combined.compile(loss=self.boundary_loss, optimizer=opt)
 
+    #----------------------------------------------------------------------
     def build_generator(self, units=256, alpha=0.2, momentum=0.8):
 
         model = Sequential()
@@ -76,6 +79,7 @@ class BGAN():
 
         return Model(noise, img)
 
+    #----------------------------------------------------------------------
     def build_discriminator(self, units=256, alpha=0.2):
 
         model = Sequential()
@@ -93,6 +97,7 @@ class BGAN():
 
         return Model(img, validity)
 
+    #----------------------------------------------------------------------
     def boundary_loss(self, y_true, y_pred):
         """
         Boundary seeking loss.
@@ -100,6 +105,7 @@ class BGAN():
         """
         return 0.5 * K.mean((K.log(y_pred) - K.log(1 - y_pred))**2)
 
+    #----------------------------------------------------------------------
     def train(self, X_train, epochs, batch_size=128, sample_interval=None):
 
         # Adversarial ground truths
@@ -140,10 +146,12 @@ class BGAN():
             if sample_interval and epoch % sample_interval == 0:
                 self.sample_images(epoch)
 
+    #----------------------------------------------------------------------
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev, self.latent_dim))
         return self.generator.predict(noise)
 
+    #----------------------------------------------------------------------
     def sample_images(self, epoch):
         r, c = 5, 5
         npixel = int(math.sqrt(self.length))
@@ -161,23 +169,27 @@ class BGAN():
         fig.savefig("images/mnist_%d.png" % epoch)
         plt.close()
 
+    #----------------------------------------------------------------------
     def load(self, folder):
         """Load GAN from input folder"""
         # load the weights from input folder
         self.generator.load_weights('%s/generator.h5'%folder)
         self.discriminator.load_weights('%s/discriminator.h5'%folder)
 
+    #----------------------------------------------------------------------
     def save(self, folder):
         """Save the GAN weights to file."""
         self.generator.save_weights('%s/generator.h5'%folder)
         self.discriminator.save_weights('%s/discriminator.h5'%folder)
         
+    #----------------------------------------------------------------------
     def description(self):
         descrip = 'BGAN with length=%i, latent_dim=%i'\
             % (self.length, self.latent_dim)
         return descrip
 
 
+#----------------------------------------------------------------------
 if __name__ == '__main__':
     # Load the dataset
     (X_train, _), (_, _) = mnist.load_data()

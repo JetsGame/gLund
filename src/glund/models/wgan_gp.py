@@ -4,7 +4,7 @@
 
 from __future__ import print_function, division
 
-from glund.models.optimizer import optimizer
+from glund.models.optimizer import build_optimizer
 
 from keras.datasets import mnist
 from keras.layers.merge import _Merge
@@ -23,14 +23,19 @@ import sys
 
 import numpy as np
 
+#======================================================================
 class RandomWeightedAverage(_Merge):
     """Provides a (random) weighted average between real and generated image samples"""
+    #----------------------------------------------------------------------
     def _merge_function(self, inputs):
         # FD: should this be (hps['nn_smallest_unit']*2, 1, 1 ,1) now?
         alpha = K.random_uniform((32, 1, 1, 1))
         return (alpha * inputs[0]) + ((1 - alpha) * inputs[1])
 
+
+#======================================================================
 class WGANGP():
+    #----------------------------------------------------------------------
     def __init__(self, hps):
         if (hps['npx']%4):
             raise ValueError('WGAN: Width and height need to be divisible by 4.')
@@ -41,7 +46,7 @@ class WGANGP():
 
         # Following parameter and optimizer set as recommended in paper
         self.n_critic = hps['n_critic']
-        opt = optimizer(hps)
+        opt = build_optimizer(hps)
 
         # Build the generator and critic
         self.generator = self.build_generator(units=hps['nn_smallest_unit'],
@@ -109,6 +114,7 @@ class WGANGP():
         self.generator_model.compile(loss=self.wasserstein_loss, optimizer=opt)
 
 
+    #----------------------------------------------------------------------
     def gradient_penalty_loss(self, y_true, y_pred, averaged_samples):
         """
         Computes gradient penalty based on prediction and weighted real / fake samples
@@ -127,9 +133,11 @@ class WGANGP():
         return K.mean(gradient_penalty)
 
 
+    #----------------------------------------------------------------------
     def wasserstein_loss(self, y_true, y_pred):
         return K.mean(y_true * y_pred)
 
+    #----------------------------------------------------------------------
     def build_generator(self, units=16, momentum=0.8):
 
         model = Sequential()
@@ -154,6 +162,7 @@ class WGANGP():
 
         return Model(noise, img)
 
+    #----------------------------------------------------------------------
     def build_critic(self, units=16, alpha=0.2, momentum=0.8, dropout=0.25):
 
         model = Sequential()
@@ -184,6 +193,7 @@ class WGANGP():
 
         return Model(img, validity)
 
+    #----------------------------------------------------------------------
     def train(self, X_train, epochs, batch_size=128, sample_interval=None):
 
         # # Load the dataset
@@ -227,10 +237,12 @@ class WGANGP():
             if sample_interval and epoch % sample_interval == 0:
                 self.sample_images(epoch)
 
+    #----------------------------------------------------------------------
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev, self.latent_dim))
         return self.generator.predict(noise)
     
+    #----------------------------------------------------------------------
     def sample_images(self, epoch):
         r, c = 5, 5
         gen_imgs = self.generate(r*c)
@@ -246,22 +258,27 @@ class WGANGP():
         fig.savefig("images/wgangp_%d.png" % epoch)
         plt.close()
 
+    #----------------------------------------------------------------------
     def load(self, folder):
         """Load GAN from input folder"""
         # load the weights from input folder
         self.generator.load_weights('%s/generator.h5'%folder)
         self.critic.load_weights('%s/critic.h5'%folder)
 
+    #----------------------------------------------------------------------
     def save(self, folder):
         """Save the GAN weights to file."""
         self.generator.save_weights('%s/generator.h5'%folder)
         self.critic.save_weights('%s/critic.h5'%folder)
 
+    #----------------------------------------------------------------------
     def description(self):
         descrip = 'WGAN-GP with width=%i, height=%i, latent_dim=%i'\
             % (self.img_rows, self.img_cols, self.latent_dim)
         return descrip
 
+
+#----------------------------------------------------------------------
 if __name__ == '__main__':
     # Load the dataset
     (X_train, _), (_, _) = mnist.load_data()

@@ -1,5 +1,7 @@
 # This file is part of gLund by S. Carrazza and F. A. Dreyer
 
+"""This script provides benchmarks for different encoding prescriptions of images."""
+
 from keras.datasets import mnist
 from glund.read_data import Jets
 from glund.JetTree import JetTree, LundImage
@@ -8,8 +10,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse, os, shutil, sys, datetime
 
-# read in the arguments
+#----------------------------------------------------------------------
 def main():
+    # read in the arguments
     parser = argparse.ArgumentParser(description='Train a generative model.')
     parser.add_argument('--mnist',  action='store_true',
                         help='Train on MNIST data (for testing purposes).')

@@ -3,7 +3,7 @@
 
 from __future__ import print_function, division
 
-from glund.models.optimizer import optimizer
+from glund.models.optimizer import build_optimizer
 
 from keras.datasets import mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout, multiply
@@ -20,14 +20,16 @@ import matplotlib.pyplot as plt
 import math
 import numpy as np
 
+#======================================================================
 class AdversarialAutoencoder():
+    #----------------------------------------------------------------------
     def __init__(self, hps, length=28*28):
         self.length = length
         self.shape = (self.length,)
         self.latent_dim = hps['latdim']
 
         #opt = Adam(0.0002, 0.5)
-        opt = optimizer(hps)
+        opt = build_optimizer(hps)
         
         # Build and compile the discriminator
         self.discriminator = self.build_discriminator(units=hps['nn_smallest_unit'],
@@ -61,6 +63,7 @@ class AdversarialAutoencoder():
                                              optimizer=opt)
 
 
+    #----------------------------------------------------------------------
     def build_encoder(self, units=256, alpha=0.2):
         # Encoder
 
@@ -83,6 +86,7 @@ class AdversarialAutoencoder():
 
         return Model(img, latent_repr)
 
+    #----------------------------------------------------------------------
     def build_decoder(self, units=256, alpha=0.2):
 
         model = Sequential()
@@ -100,6 +104,7 @@ class AdversarialAutoencoder():
 
         return Model(z, img)
 
+    #----------------------------------------------------------------------
     def build_discriminator(self, units=256, alpha=0.2):
 
         model = Sequential()
@@ -116,6 +121,7 @@ class AdversarialAutoencoder():
 
         return Model(encoded_repr, validity)
 
+    #----------------------------------------------------------------------
     def train(self, X_train, epochs, batch_size=128, sample_interval=None):
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -147,16 +153,19 @@ class AdversarialAutoencoder():
             g_loss = self.adversarial_autoencoder.train_on_batch(imgs, [imgs, valid])
 
             # Plot the progress
-            print ("%d [D loss: %f, acc: %.2f%%] [G loss: %f, mse: %f]" % (epoch, d_loss[0], 100*d_loss[1], g_loss[0], g_loss[1]))
+            print ("%d [D loss: %f, acc: %.2f%%] [G loss: %f, mse: %f]"
+                   % (epoch, d_loss[0], 100*d_loss[1], g_loss[0], g_loss[1]))
 
             # If at save interval => save generated image samples
             if sample_interval and epoch % sample_interval == 0:
                 self.sample_images(epoch)
 
+    #----------------------------------------------------------------------
     def generate(self, nev):
         z = np.random.normal(size=(nev, self.latent_dim))
         return self.decoder.predict(z)
     
+    #----------------------------------------------------------------------
     def sample_images(self, epoch):
         r, c = 5, 5
         npx = int(math.sqrt(self.length))
@@ -176,6 +185,7 @@ class AdversarialAutoencoder():
         fig.savefig("images/mnist_%d.png" % epoch)
         plt.close()
 
+    #----------------------------------------------------------------------
     def load(self, folder):
         """Load GAN from input folder"""
         # load the weights from input folder
@@ -183,16 +193,20 @@ class AdversarialAutoencoder():
         self.decoder.load_weights('%s/decoder.h5'%folder)
         self.discriminator.load_weights('%s/discriminator.h5'%folder)
 
+    #----------------------------------------------------------------------
     def save(self, folder):
         self.encoder.save_weights('%s/encoder.h5'%folder)
         self.decoder.save_weights('%s/decoder.h5'%folder)
         self.discriminator.save_weights('%s/discriminator.h5'%folder)
         
+    #----------------------------------------------------------------------
     def description(self):
         descrip = 'AAE with length=%i, latent_dim=%i'\
             % (self.length, self.latent_dim)
         return descrip
 
+
+#----------------------------------------------------------------------
 if __name__ == '__main__':
     # Load the dataset
     (X_train, _), (_, _) = mnist.load_data()

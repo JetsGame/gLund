@@ -2,6 +2,7 @@
 
 import numpy as np
 
+#----------------------------------------------------------------------
 def loss_calc(imgs_gen, imgs_ref, epsilon):
     """
     Calculate a loss function by comparing a set of generated 
@@ -47,6 +48,7 @@ def loss_calc(imgs_gen, imgs_ref, epsilon):
           np.linalg.norm(np.average(imgs_gen,axis=0)-np.average(imgs_ref,axis=0)))
     return loss
 
+#----------------------------------------------------------------------
 def zca_whiten(X):
     """
     Applies ZCA whitening to the data (X)

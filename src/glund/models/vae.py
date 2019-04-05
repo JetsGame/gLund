@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from glund.models.optimizer import optimizer
+from glund.models.optimizer import build_optimizer
 
 from keras.layers import Lambda, Input, Dense
 from keras.models import Model
@@ -18,6 +18,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
+#----------------------------------------------------------------------
 # reparameterization trick
 # instead of sampling from Q(z|X), sample epsilon = N(0,I)
 # z = z_mean + sqrt(var) * epsilon
@@ -36,8 +37,11 @@ def sampling(args):
     epsilon = K.random_normal(shape=(batch, dim))
     return z_mean + K.exp(0.5 * z_log_var) * epsilon
 
+
+#======================================================================
 class VAE(object):
 
+    #----------------------------------------------------------------------
     def __init__(self, hps, length=28*28):
         self.length = length
         self.latent_dim = hps['latdim']
@@ -49,6 +53,7 @@ class VAE(object):
         # set up everything
         
         
+    #----------------------------------------------------------------------
     def build_VAE(self, hps):
         # build encoder model
         inputs = Input(shape=self.shape, name='encoder_input')
@@ -95,13 +100,14 @@ class VAE(object):
         vae_loss = K.mean(reconstruction_loss + kl_loss)
         vae.add_loss(vae_loss)
         #opt = Adam(0.0003, 0.9)
-        opt = optimizer(hps)
+        opt = build_optimizer(hps)
         vae.compile(optimizer=opt)
         # vae.compile(optimizer='adam')
         vae.summary()
         # plot_model(vae,to_file='vae_mlp.png',show_shapes=True)
         self.vae = vae
 
+    #----------------------------------------------------------------------
     def train(self,x_train, epochs=100, batch_size=128):
         x_train = np.reshape(x_train, [-1, self.length])
         self.vae.fit(x_train, epochs=epochs)
@@ -111,10 +117,12 @@ class VAE(object):
     #     x_test  = np.reshape(x_test,  [-1, self.length])
     #     self.vae.fit(x_train, epochs=epochs, validation_data=(x_test, None))
 
+    #----------------------------------------------------------------------
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev, self.latent_dim))
         return self.decoder.predict(noise)
 
+    #----------------------------------------------------------------------
     def plot_results(self):
         r, c = 5, 5
         gen_imgs = self.generate(r*c)
@@ -131,22 +139,27 @@ class VAE(object):
                     fig.savefig("images/vae_final.png")
                     plt.close()
 
+    #----------------------------------------------------------------------
     def load(self, folder):
         """Load GAN from input folder"""
         # load the weights from input folder
         self.encoder.load_weights('%s/encoder.h5'%folder)
         self.decoder.load_weights('%s/decoder.h5'%folder)
 
+    #----------------------------------------------------------------------
     def save(self, folder):
         """Save the GAN weights to file."""
         self.encoder.save_weights('%s/encoder.h5'%folder)
         self.decoder.save_weights('%s/decoder.h5'%folder)
 
+    #----------------------------------------------------------------------
     def description(self):
         descrip = 'VAE with length=%i, latent_dim=%i, mse_loss=%s'\
             % (self.length, self.latent_dim, self.mse_loss)
         return descrip
     
+
+#----------------------------------------------------------------------
 if __name__ == '__main__':
     
     # MNIST dataset

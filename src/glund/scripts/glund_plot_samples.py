@@ -1,5 +1,7 @@
 # This file is part of gLund by S. Carrazza and F. A. Dreyer
 
+"""This script provides diagnostic plots for generated lund images"""
+
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from glund.read_data import Jets 
@@ -7,22 +9,11 @@ from glund.JetTree import JetTree, LundImage
 import numpy as np
 import os, argparse
 from matplotlib.backends.backend_pdf import PdfPages
-def plot_mnist(filename):
-    r, c = 5, 5
-    imgs = np.load(filename)
-    sample = imgs[np.random.choice(imgs.shape[0], r*c, replace=False), :]
-    fig, axs = plt.subplots(r, c)
-    cnt = 0
-    for i in range(r):
-        for j in range(c):
-            axs[i,j].imshow(sample[cnt, :,:], cmap='gray',vmin=0.0,vmax=2.0)
-            axs[i,j].axis('off')
-            cnt += 1
-    figname=filename.split(os.extsep)[0]+'.pdf'
-    fig.savefig(figname)
-    plt.close()
 
+    
+#----------------------------------------------------------------------
 def plot_lund(filename, figname, eps=None, rnd=False):
+    """Plot a few samples of lund images as well as the average density."""
     r, c = 5, 5
     imgs = np.load(filename)
     if eps:
@@ -44,9 +35,12 @@ def plot_lund(filename, figname, eps=None, rnd=False):
         plt.imshow(np.average(imgs,axis=0))
         plt.close()
         pdf.savefig(fig)
+
         
+#----------------------------------------------------------------------
 def plot_lund_with_ref(filename, reference, figname, eps=None,
                        rnd=False, prob=False):
+    """Plot a samples of lund images and the average density along with reference data."""
     r, c = 5, 5
     imgs = np.load(filename)
     if eps:
@@ -105,35 +99,25 @@ def plot_lund_with_ref(filename, reference, figname, eps=None,
         plt.close()
         pdf.savefig(fig)
 
+        
+#----------------------------------------------------------------------
 def main():
     # read in the arguments
     parser = argparse.ArgumentParser(description='Plot a model.')
-    parser.add_argument('--data', type=str, default=None, help='Generated images')
+    parser.add_argument('--data', type=str, required=True, help='Generated images')
     parser.add_argument('--reference', type=str, default=None, help='Pythia reference')
     parser.add_argument('--round', action='store_true',
                         help='Round all pixel values to nearest integer')
     parser.add_argument('--epsilon', action='store', default=None,
                         type=float, help='Threshold for pixel activation.')
-    parser.add_argument('--deterministic', action='store_true',
+    parser.add_argument('--deterministic', action='store_true', dest='det',
                         help='Round all pixel values to nearest integer')
     args = parser.parse_args()
-    prob = not args.deterministic
-    if not args.data:
-        plot_mnist('test/mnist_dcgan.npy')
-        plot_mnist('test/mnist_gan.npy')
-        plot_mnist('test/mnist_vae.npy')
-        plot_mnist('test/mnist_wgan.npy')
-        plot_mnist('test/mnist_wgangp.npy')
-        
-        plot_lund('test/lund_dcgan.npy')
-        plot_lund('test/lund_gan.npy')
-        plot_lund('test/lund_vae.npy')
-        plot_lund('test/lund_wgan.npy')
-        plot_lund('test/lund_wgangp.npy')
-    elif args.reference:
+
+    if args.reference:
         figname=args.data.split(os.extsep)[0]+'.pdf'
         plot_lund_with_ref(args.data, args.reference, figname,
-                           args.epsilon, args.round, prob)
+                           args.epsilon, args.round, not args.det)
     else:
         figname=args.data.split(os.extsep)[0]+'.pdf'
         plot_lund(args.data, figname, args.epsilon, args.round)

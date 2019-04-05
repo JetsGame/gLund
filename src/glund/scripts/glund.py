@@ -1,5 +1,7 @@
 # This file is part of gLund by S. Carrazza and F. A. Dreyer
 
+"""glund.py: the entry point for glund."""
+
 from glund.read_data import Jets
 from glund.JetTree import JetTree, LundImage
 from glund.tools import loss_calc

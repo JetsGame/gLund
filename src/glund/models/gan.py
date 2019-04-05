@@ -1,7 +1,7 @@
 # This file is part of gLund by S. Carrazza and F. A. Dreyer
 # adapted from: github.com/eriklindernoren/Keras-GAN/tree/master/gan
 
-from glund.models.optimizer import optimizer
+from glund.models.optimizer import build_optimizer
 from keras.datasets import mnist
 from keras import Sequential
 from keras.layers import Dense, LeakyReLU, BatchNormalization, Reshape
@@ -9,9 +9,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-
+#======================================================================
 class GAN(object):
 
+    #----------------------------------------------------------------------
     def __init__(self, hps, length=28*28):
         self.length = length
         self.shape  = (self.length,)
@@ -19,7 +20,7 @@ class GAN(object):
 
         # optimizer
         #opt = Adam(lr=0.0002, decay=8e-9)
-        opt = optimizer(hps)
+        opt = build_optimizer(hps)
 
         # allocate generator and discriminant
         self.generator = self.build_generator(units=hps['nn_smallest_unit'],
@@ -31,6 +32,7 @@ class GAN(object):
         self.adversarial_model = self.ad_model()
         self.adversarial_model.compile(loss='binary_crossentropy', optimizer=opt)
 
+    #----------------------------------------------------------------------
     def train(self, x, epochs=10000, batch_size=32, save_interval=None):
         """The train method"""
         for ite in range(epochs):
@@ -57,6 +59,7 @@ class GAN(object):
             if save_interval and ite % save_interval == 0 : 
                 self.plot_images(step=ite)
 
+    #----------------------------------------------------------------------
     def build_generator(self, units=256, alpha=0.2, momentum=0.8):
         """The GAN generator"""
         model = Sequential()
@@ -72,6 +75,7 @@ class GAN(object):
         model.add(Dense(self.length, activation='tanh'))
         return model
 
+    #----------------------------------------------------------------------
     def build_discriminator(self, units=256, alpha=0.2):
         """The GAN discriminator"""
         model = Sequential()
@@ -83,6 +87,7 @@ class GAN(object):
         model.summary()
         return model
 
+    #----------------------------------------------------------------------
     def ad_model(self):
         self.discriminator.trainable = False
         model = Sequential()
@@ -90,10 +95,12 @@ class GAN(object):
         model.add(self.discriminator)
         return model
 
+    #----------------------------------------------------------------------
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev,self.latent_dim))
         return self.generator.predict(noise)
 
+    #----------------------------------------------------------------------
     def plot_images(self, samples=16, step=0):
         filename = f"images/dcgan_{step}.png"
         npixel = int(math.sqrt(self.length))
@@ -111,23 +118,26 @@ class GAN(object):
         plt.savefig(filename)
         plt.close('all')
 
+    #----------------------------------------------------------------------
     def load(self, folder):
         """Load GAN from input folder"""
         # load the weights from input folder
         self.generator.load_weights('%s/generator.h5'%folder)
         self.discriminator.load_weights('%s/discriminator.h5'%folder)
 
+    #----------------------------------------------------------------------
     def save(self, folder):
         """Save the GAN weights to file."""
         self.generator.save_weights('%s/generator.h5'%folder)
         self.discriminator.save_weights('%s/discriminator.h5'%folder)
 
+    #----------------------------------------------------------------------
     def description(self):
         return 'GAN with length=%i, latent_dim=%i' % (self.length, self.latent_dim)
 
         
-if __name__ == '__main__':
-    
+#----------------------------------------------------------------------
+if __name__ == '__main__':    
     # Load the dataset
     (X_train, _), (_, _) = mnist.load_data()
     # Rescale -1 to 1

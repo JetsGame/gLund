@@ -7,9 +7,11 @@ from sklearn.decomposition import PCA
 from glund.tools import zca_whiten
 import numpy as np
 
+#======================================================================
 class Preprocess(ABC):
     """Preprocessing pipeline"""
     
+    #----------------------------------------------------------------------
     def __init__(self, scaler, flatten, remove_zero):
         self.scaler = StandardScaler() if scaler else None
         if not flatten and remove_zero:
@@ -18,6 +20,7 @@ class Preprocess(ABC):
         self.flatten = flatten
         self.shape = None
 
+    #----------------------------------------------------------------------    
     def fit(self, data):
         """Set up the preprocessing pipeline"""
         self.shape = data.shape[1:]
@@ -29,6 +32,7 @@ class Preprocess(ABC):
             self.scaler.fit(data)
         self._method_fit(data)
 
+    #----------------------------------------------------------------------
     def transform(self, data):
         """Apply preprocessing to input data"""
         data = data.reshape(-1, data.shape[1]*data.shape[2])
@@ -41,6 +45,7 @@ class Preprocess(ABC):
             return data.reshape((len(data),)+self.shape)
         return data
 
+    #----------------------------------------------------------------------
     def inverse(self, data):
         """Return to image space from preprocessed input"""
         if not self.flatten:
@@ -55,65 +60,84 @@ class Preprocess(ABC):
             result = data
         return result.reshape(len(data),self.shape[0],self.shape[1])
 
+    #----------------------------------------------------------------------
     @abstractmethod
     def _method_fit(self, data):
         pass
 
+    #----------------------------------------------------------------------
     @abstractmethod
     def _method_transform(self, data):
         return data
 
+    #----------------------------------------------------------------------
     @abstractmethod
     def _method_inverse(self, data):
         return data
 
+#======================================================================
 class PreprocessPCA(Preprocess):
     """Preprocessing pipeline using PCA."""
     
+    #----------------------------------------------------------------------
     def __init__(self, ncomp, whiten, scaler=True, flatten=True, remove_zero=True):
         Preprocess.__init__(self, scaler=scaler, flatten=flatten, remove_zero=remove_zero)
         self.pca = PCA(ncomp, whiten=whiten)
 
+    #----------------------------------------------------------------------
     def _method_fit(self, data):
         self.pca.fit(data)
 
+    #----------------------------------------------------------------------
     def _method_transform(self, data):
         return self.pca.transform(data)
 
+    #----------------------------------------------------------------------
     def _method_inverse(self, data):
         return self.pca.inverse_transform(data)
 
 
+#======================================================================
 class PreprocessZCA(Preprocess):
     """Preprocessing pipeline using ZCA."""
     
+    #----------------------------------------------------------------------
     def __init__(self, scaler=True, flatten=True, remove_zero=True):
         Preprocess.__init__(self, scaler=scaler, flatten=flatten, remove_zero=remove_zero)
 
+    #----------------------------------------------------------------------
     def _method_fit(self, data):
         pass
 
+    #----------------------------------------------------------------------
     def _method_transform(self, data):
         result, self.zca = zca_whiten(data)
         return result
 
+    #----------------------------------------------------------------------
     def _method_inverse(self, data):
         return np.dot(data, self.zca)
 
+
+#======================================================================
 class PreprocessAE(Preprocess):
     """Preprocessing pipeline using autoencoder."""
     
+    #----------------------------------------------------------------------
     def __init__(self, dim, epochs, scaler=True, flatten=True, remove_zero=True):
         Preprocess.__init__(self, scaler=scaler, flatten=flatten, remove_zero=remove_zero)
         self.epochs = epochs
         self.dim = dim
 
+    #----------------------------------------------------------------------
     def _method_fit(self, data):
         self.ae = Autoencoder(length=np.sum(data.shape[1:]), dim=self.dim)
         self.ae.train(data, self.epochs)
 
+    #----------------------------------------------------------------------
     def _method_transform(self, data):
         return self.ae.encode(data)
 
+    #----------------------------------------------------------------------
     def _method_inverse(self, data):
         return self.ae.decode(data)

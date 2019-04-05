@@ -2,7 +2,8 @@
 
 from keras.optimizers import Adam, RMSprop, SGD, Adagrad
 
-def optimizer(hps):
+#----------------------------------------------------------------------
+def build_optimizer(hps):
     """Set up a keras optimizer"""
     if hps['optimizer']=='Adam':
         opt = Adam(lr=hps['learning_rate'],

@@ -3,7 +3,7 @@
 
 from __future__ import print_function, division
 
-from glund.models.optimizer import optimizer
+from glund.models.optimizer import build_optimizer
 
 from keras.datasets import mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout
@@ -11,16 +11,17 @@ from keras.layers import BatchNormalization, Activation, ZeroPadding2D
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Sequential, Model
-
 import keras.backend as K
 
 import matplotlib.pyplot as plt
-
+import numpy as np
 import sys
 
-import numpy as np
 
+
+#======================================================================
 class WGAN():
+    #----------------------------------------------------------------------
     def __init__(self, hps):
         if (hps['npx']%4):
             raise ValueError('WGAN: Width and height need to be divisible by 4.')
@@ -63,9 +64,11 @@ class WGAN():
                               optimizer=opt,
                               metrics=['accuracy'])
 
+    #----------------------------------------------------------------------
     def wasserstein_loss(self, y_true, y_pred):
         return K.mean(y_true * y_pred)
 
+    #----------------------------------------------------------------------
     def build_generator(self, units=16, momentum=0.8):
 
         model = Sequential()
@@ -91,6 +94,7 @@ class WGAN():
 
         return Model(noise, img)
 
+    #----------------------------------------------------------------------
     def build_critic(self, units=16, alpha=0.2, momentum=0.8, dropout=0.25):
 
         model = Sequential()
@@ -122,6 +126,7 @@ class WGAN():
 
         return Model(img, validity)
 
+    #----------------------------------------------------------------------
     def train(self, X_train, epochs, batch_size=128, sample_interval=None):
 
         # Adversarial ground truths
@@ -171,10 +176,12 @@ class WGAN():
             if sample_interval and epoch % sample_interval == 0:
                 self.sample_images(epoch)
 
+    #----------------------------------------------------------------------
     def generate(self, nev):
         noise = np.random.normal(0, 1, (nev, self.latent_dim))
         return self.generator.predict(noise)
 
+    #----------------------------------------------------------------------
     def sample_images(self, epoch):
         r, c = 5, 5
         gen_imgs = self.generate(r*c)
@@ -190,22 +197,27 @@ class WGAN():
         fig.savefig("images/wgan_%d.png" % epoch)
         plt.close()
     
+    #----------------------------------------------------------------------
     def load(self, folder):
         """Load GAN from input folder"""
         # load the weights from input folder
         self.generator.load_weights('%s/generator.h5'%folder)
         self.critic.load_weights('%s/critic.h5'%folder)
 
+    #----------------------------------------------------------------------
     def save(self, folder):
         """Save the GAN weights to file."""
         self.generator.save_weights('%s/generator.h5'%folder)
         self.critic.save_weights('%s/critic.h5'%folder)
 
+    #----------------------------------------------------------------------
     def description(self):
         descrip = 'WGAN with width=%i, height=%i, latent_dim=%i'\
             % (self.img_rows, self.img_cols, self.latent_dim)
         return descrip
 
+
+#----------------------------------------------------------------------
 if __name__ == '__main__':
     # Load the dataset
     (X_train, _), (_, _) = mnist.load_data()
