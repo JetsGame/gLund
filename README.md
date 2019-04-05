@@ -14,8 +14,8 @@ gLund is tested and supported on 64-bit systems running Linux.
 
 Install gLund with Python's pip package manager:
 ```
-git clone https://github.com/JetsGames/groomrl.git
-cd groomrl
+git clone https://github.com/JetsGames/gLund.git
+cd gLund
 pip install .
 ```
 To install the package in a specific location, use
