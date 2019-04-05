@@ -1,21 +1,44 @@
-Generative models for jets
-==========================
+gLund
+======
 
-This repository investigates some generative models for Jets.
+This repository contains the code and results presented in (....) .
 
-TODO: Lund images with GAN, CVAE, CycleGAN
+## About
 
+gLund is a framework using the Lund jet plane to construct generative 
+models for jet substructure.
 
-Try Boundary Seeking GANs for discrete inputs:
-- https://github.com/rdevon/BGAN
-- https://arxiv.org/pdf/1702.08431.pdf
+## Install gLund
 
+gLund is tested and supported on 64-bit systems running Linux.
 
-Some ressources:
-- https://github.com/eriklindernoren/Keras-GAN
-- https://github.com/znxlwm/pytorch-generative-model-collections
-- https://github.com/cameronfabbri/cWGANs
-- https://github.com/igul222/improved_wgan_training
-- https://github.com/jalola/improved-wgan-pytorch
-- https://github.com/buriburisuri/ac-gan
-- https://github.com/kongyanye/cwgan-gp
+Install gLund with Python's pip package manager:
+```
+git clone https://github.com/JetsGames/groomrl.git
+cd groomrl
+pip install .
+```
+To install the package in a specific location, use
+the "--target=PREFIX_PATH" flag.
+
+## Input data
+
+All data used for the final models can be downloaded from the git-lfs repository
+at https://github.com/JetsGame/data.
+
+## Running the code
+
+In order to launch the code run:
+```
+glund --output <output_folder>  <runcard.yaml>
+```
+This will create a folder containing the result of the fit.
+
+To create diagnostic plots from an existing model, use
+```
+glund_plot_samples --data output_folder/generated_images.npy  --reference ../data/valid/valid_QCD_500GeV.json.gz
+```
+
+## References
+
+* TBA
