@@ -1,14 +1,31 @@
 # This file is part of gLund by S. Carrazza and F. A. Dreyer
 
 from glund.models.autoencoder import Autoencoder
-from abc import ABC, abstractmethod
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from glund.tools import zca_whiten
 import numpy as np
 
+#----------------------------------------------------------------------
+def build_preprocessor(input_model, setup):
+    flat_input = input_model in ('gan', 'vae', 'bgan', 'aae', 'lsgan')
+    if setup['pca']:
+        print('[+] Setting up PCA preprocessing pipeline')
+        if flat_input:
+            raise Exception('build_preprocessor: pca unavailable for this model')
+        preprocess = PreprocessorPCA(setup['pca_fraction'], whiten=False)
+    elif setup['zca']:
+        print('[+] Setting up ZCA preprocessing pipeline')
+        preprocess = PreprocessorZCA(flatten=flat_input, remove_zero=flat_input)
+    else:
+        print('[+] Setting up minimal preprocessing pipeline')
+        preprocess = Preprocessor(scaler=True, flatten=flat_input,
+                                  remove_zero=flat_input)
+    return preprocess
+
+
 #======================================================================
-class Preprocess(ABC):
+class Preprocessor:
     """Preprocessing pipeline"""
     
     #----------------------------------------------------------------------
@@ -61,31 +78,31 @@ class Preprocess(ABC):
         return result.reshape(len(data),self.shape[0],self.shape[1])
 
     #----------------------------------------------------------------------
-    @abstractmethod
     def _method_fit(self, data):
         pass
 
     #----------------------------------------------------------------------
-    @abstractmethod
     def _method_transform(self, data):
         return data
 
     #----------------------------------------------------------------------
-    @abstractmethod
     def _method_inverse(self, data):
         return data
 
+
 #======================================================================
-class PreprocessPCA(Preprocess):
+class PreprocessorPCA(Preprocessor):
     """Preprocessing pipeline using PCA."""
     
     #----------------------------------------------------------------------
     def __init__(self, ncomp, whiten, scaler=True, flatten=True, remove_zero=True):
-        Preprocess.__init__(self, scaler=scaler, flatten=flatten, remove_zero=remove_zero)
+        Preprocessor.__init__(self, scaler=scaler, flatten=flatten,
+                              remove_zero=remove_zero)
         self.pca = PCA(ncomp, whiten=whiten)
 
     #----------------------------------------------------------------------
     def _method_fit(self, data):
+        print('PCA fit')
         self.pca.fit(data)
 
     #----------------------------------------------------------------------
@@ -98,12 +115,13 @@ class PreprocessPCA(Preprocess):
 
 
 #======================================================================
-class PreprocessZCA(Preprocess):
+class PreprocessorZCA(Preprocessor):
     """Preprocessing pipeline using ZCA."""
     
     #----------------------------------------------------------------------
     def __init__(self, scaler=True, flatten=True, remove_zero=True):
-        Preprocess.__init__(self, scaler=scaler, flatten=flatten, remove_zero=remove_zero)
+        Preprocessor.__init__(self, scaler=scaler, flatten=flatten,
+                              remove_zero=remove_zero)
 
     #----------------------------------------------------------------------
     def _method_fit(self, data):
@@ -120,12 +138,13 @@ class PreprocessZCA(Preprocess):
 
 
 #======================================================================
-class PreprocessAE(Preprocess):
+class PreprocessorAE(Preprocessor):
     """Preprocessing pipeline using autoencoder."""
     
     #----------------------------------------------------------------------
     def __init__(self, dim, epochs, scaler=True, flatten=True, remove_zero=True):
-        Preprocess.__init__(self, scaler=scaler, flatten=flatten, remove_zero=remove_zero)
+        Preprocessor.__init__(self, scaler=scaler, flatten=flatten,
+                              remove_zero=remove_zero)
         self.epochs = epochs
         self.dim = dim
 

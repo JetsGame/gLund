@@ -22,8 +22,7 @@ def main():
     parser.add_argument('--dim', type=int, default=100, dest='latdim',
                         help='Number of latent dimensions.')
     parser.add_argument('--npx', type=int, default=28, help='Number of pixels.')
-    parser.add_argument('--data', type=str,
-                        default='../../data/valid/valid_QCD_500GeV.json.gz',
+    parser.add_argument('--data', type=str, required=True,
                         help='Data set on which to train.')
     parser.add_argument('--keep-zeros', action='store_true', dest='keepzero',
                         help='Convert output values to nearest integer.')
@@ -37,7 +36,7 @@ def main():
     parser.add_argument('--autoencoder', action='store',const=200, default=None,
                         nargs='?', type=int, help='Perform autoencoding')
     args = parser.parse_args()
-
+    
     rem0=not args.keepzero
     scaler=not args.noscaler
     flatten=not args.noflat
@@ -62,11 +61,17 @@ def main():
 
     # set up the preprocessing pipeline
     if args.pca:
-        preprocess = PreprocessPCA(args.pca, whiten=True, scaler=scaler, flatten=flatten, remove_zero=rem0)
+        preprocess = PreprocessorPCA(args.pca, whiten=True, scaler=scaler,
+                                     flatten=flatten, remove_zero=rem0)
     elif args.autoencoder:
-        preprocess = PreprocessAE(args.autoencoder, args.epochs, scaler=scaler, flatten=flatten, remove_zero=rem0)
+        preprocess = PreprocessorAE(args.autoencoder, args.epochs, scaler=scaler,
+                                    flatten=flatten, remove_zero=rem0)
     elif args.zca:
-        preprocess = PreprocessZCA(scaler=scaler, flatten=flatten, remove_zero=rem0)
+        preprocess = PreprocessorZCA(scaler=scaler, flatten=flatten,
+                                     remove_zero=rem0)
+    else:
+        preprocess = Preprocessor(scaler=scaler, flatten=flatten,
+                                  remove_zero=rem0)
     # fit the preprocessing unit
     preprocess.fit(img_train)
     # transform the images
@@ -82,7 +87,14 @@ def main():
     if args.mnist:
         ref_transf = img_transf.reshape(img_transf.shape[0],args.npx,args.npx)[selec, :]
     else:
-        ref_transf = np.round(img_transf.reshape(img_transf.shape[0],args.npx,args.npx)[selec, :])
+        # now interpret the probabilistic sample as physical images
+        for i,v in np.ndenumerate(img_transf):
+            if v < np.random.uniform(0,1):
+                img_transf[i]=0.0
+            else:
+                img_transf[i]=1.0
+        ref_transf = img_transf.reshape(img_transf.shape[0],
+                                        args.npx,args.npx)[selec, :]
     ref_train = img_train.reshape(img_train.shape[0],args.npx,args.npx)[selec, :]
 
     loss=np.linalg.norm(np.average(ref_train - ref_transf,axis=0))

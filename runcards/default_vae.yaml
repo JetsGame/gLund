@@ -8,10 +8,10 @@ nev: -1 # -1 = all data
 
 # Select model, available options are:
 # gan, dcgan, wgan, wgangp, vae, aae, bgan, lsgan
-model: gan
+model: vae
 
 # Number of epochs
-epochs: 1000
+epochs: 100
 
 # Batch size
 batch_size: 32

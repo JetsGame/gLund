@@ -8,7 +8,7 @@ nev: -1 # -1 = all data
 
 # Select model, available options are:
 # gan, dcgan, wgan, wgangp, vae, aae, bgan, lsgan
-model: gan
+model: bgan
 
 # Number of epochs
 epochs: 1000

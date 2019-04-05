@@ -6,7 +6,7 @@ from glund.read_data import Jets
 from glund.JetTree import JetTree, LundImage
 from glund.tools import loss_calc
 from glund.model import build_model
-from glund.preprocess import PreprocessPCA, PreprocessZCA
+from glund.preprocess import build_preprocessor
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse, os, shutil, sys, datetime
@@ -44,7 +44,8 @@ def main():
     input_model = setup['model']
 
     # check that input is valid
-    if input_model not in ('gan', 'dcgan', 'wgan', 'wgangp', 'vae', 'aae', 'bgan', 'lsgan'):
+    if input_model not in ('gan', 'dcgan', 'wgan', 'wgangp', 'vae',
+                           'aae', 'bgan', 'lsgan'):
         raise ValueError('Invalid input: choose one model at a time.')
     if os.path.exists(args.output) and not args.force:
         raise Exception(f'{args.output} already exists, use "--force" to overwrite.')
@@ -89,20 +90,14 @@ def main():
         # img_train=np.array([np.average(img_train[args.navg*i:args.navg*i+args.navg],axis=0)
         #                     for i in range(len(img_train)//args.navg)])
 
-    # if requested, set up a preprocessing pipeline
-    if setup['pca']:
-        preprocess = PreprocessPCA(setup['pca_fraction'], whiten=False)
-    elif setup['zca']:
-        preprocess = PreprocessZCA(flatten=flat_input, remove_zero=flat_input)
-
+    # set up a preprocessing pipeline
+    preprocess = build_preprocessor(input_model, setup)
+    
     # prepare the training data for the model training
-    if setup['pca'] or setup['zca']:
-        preprocess.fit(img_train)
-        # NB: for ZCA, the zca factor is set in the process.transform call
-        img_train = preprocess.transform(img_train)
-    elif flat_input:
-        img_train = img_train.reshape(-1, setup['npx']*setup['npx'])
-
+    preprocess.fit(img_train)
+    # NB: for ZCA, the zca factor is set in the process.transform call
+    img_train = preprocess.transform(img_train)
+    
     # now set up the model
     model = build_model(input_model, setup, length=(img_train.shape[1]))
 
@@ -114,10 +109,7 @@ def main():
     gen_sample = model.generate(setup['ngen'])
 
     # retransform the generated sample to image space
-    if setup['pca'] or setup['zca']:
-        gen_sample = preprocess.inverse(gen_sample)
-    else:
-        gen_sample = gen_sample.reshape(setup['ngen'], setup['npx'], setup['npx'])
+    gen_sample = preprocess.inverse(gen_sample)
 
     if not setup['deterministic']:
         # now interpret the probabilistic sample as physical images
@@ -138,17 +130,17 @@ def main():
     folder = args.output.strip('/')
 
     # for loss function, define epsilon and retransform the training sample
-    epsilon=0.3
+    epsilon=0.5
     # get reference sample and generated sample for tests
-    if setup['pca'] or setup['zca']:
-        img_train = preprocess.inverse(img_train)
+    img_train = preprocess.inverse(img_train)
     ref_sample = img_train.reshape(img_train.shape[0],setup['npx'],setup['npx'])\
         [np.random.choice(img_train.shape[0], len(gen_sample), replace=True), :]
 
     # write out a file with basic information on the run
     with open('%s/info.txt' % folder,'w') as f:
         print('# %s' % model.description(), file=f)
-        print('# created on %s with the command:' % datetime.datetime.utcnow(), file=f)
+        print('# created on %s with the command:'
+              % datetime.datetime.utcnow(), file=f)
         print('# '+' '.join(sys.argv), file=f)
         print('# loss = %f' % loss_calc(gen_sample,ref_sample,epsilon), file=f)
 
