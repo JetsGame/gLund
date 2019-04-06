@@ -96,6 +96,21 @@ def plot_lund_with_ref(filename, reference, figname, eps=None,
         plt.imshow(np.divide(np.average(imgs,axis=0),np.average(imgs_ref,axis=0)),
                    vmin=0.5, vmax=1.5, cmap=cm.seismic)
         plt.colorbar(orientation='vertical')
+        pdf.savefig()
+        plt.close()
+        fig=plt.figure()
+        bins = np.arange(0, 101, 1)
+        gen_act=[]
+        ref_act=[]
+        for i in range(len(imgs)):
+            gen_act.append(np.sum(imgs[i]))
+        for i in range(len(imgs_ref)):
+            ref_act.append(np.sum(imgs_ref[i]))
+        plt.hist(gen_act, bins=bins, color='C0', alpha=0.3, label='generated')
+        plt.hist(ref_act, bins=bins, color='C1', alpha=0.3, label='reference')
+        plt.title('activated pixels')
+        plt.xlim((0,50))
+        plt.legend()
         plt.close()
         pdf.savefig(fig)
 
