@@ -180,7 +180,6 @@ def main():
                                         args.cluster, folder)
     setup['scan'] = False
     
-    print('[+] Training best model:')
     # build and train the model
     model, gen_sample, loss = build_and_train_model(setup)
 
@@ -191,6 +190,9 @@ def main():
               % datetime.datetime.utcnow(), file=f)
         print('# '+' '.join(sys.argv), file=f)
         print('# loss = %f' % loss, file=f)
+
+    # copy runcard to output folder
+    shutil.copyfile(args.runcard, f'{folder}/input-runcard.json')
 
     # save the model to file
     model.save(folder)
