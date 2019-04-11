@@ -197,7 +197,7 @@ def main():
         print('# created on %s with the command:'
               % datetime.datetime.utcnow(), file=f)
         print('# '+' '.join(sys.argv), file=f)
-        print('# final loss:\t%f\traw loss\t%f)' % loss, file=f)
+        print('# final loss:\t%f\traw loss:\t%f' % loss, file=f)
 
     # copy runcard to output folder
     shutil.copyfile(args.runcard, f'{folder}/input-runcard.json')
