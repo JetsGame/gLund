@@ -57,7 +57,7 @@ def build_and_train_model(setup):
         raise ValueError('Invalid input: choose one model at a time.')
 
     # read in the data set
-    if setup['data'] is 'mnist':
+    if setup['data'] == 'mnist':
         print('[+] Loading mnist data')
         from keras.datasets import mnist
         # for debugging purposes, we have the option of loading in the
@@ -116,6 +116,12 @@ def build_and_train_model(setup):
     # now generate a test sample and save it
     gen_sample = model.generate(setup['ngen'])
 
+    # get the raw loss, evaluated on gan input and generated sample
+    print(gen_sample.shape, img_train.shape)
+    print('[+] Calculating loss on raw training data')
+    loss_raw = loss_calc(gen_sample[:min(setup['ngen'],len(img_train))],
+                         img_train[:min(setup['ngen'],len(img_train))])
+    
     # retransform the generated sample to image space
     gen_sample = preprocess.inverse(gen_sample)
 
@@ -131,9 +137,11 @@ def build_and_train_model(setup):
     ref_sample = img_data.reshape(img_data.shape[0],setup['npx'],setup['npx'])\
         [np.random.choice(img_data.shape[0], len(gen_sample), replace=True), :]
 
-    loss = loss_calc(gen_sample,ref_sample)
+    print('[+] Calculating final loss after inverting preprocessing')
+    loss = (loss_calc(gen_sample,ref_sample), loss_raw)
     if setup['scan']:
-        res = {'loss': loss, 'status': STATUS_OK}
+        res = {'loss': loss[0] if setup['monitor_final_loss'] else loss[1],
+               'status': STATUS_OK}
     else:
         res = model, gen_sample, loss
     return res
@@ -189,7 +197,7 @@ def main():
         print('# created on %s with the command:'
               % datetime.datetime.utcnow(), file=f)
         print('# '+' '.join(sys.argv), file=f)
-        print('# loss = %f' % loss, file=f)
+        print('# final loss:\t%f\traw loss\t%f)' % loss, file=f)
 
     # copy runcard to output folder
     shutil.copyfile(args.runcard, f'{folder}/input-runcard.json')
