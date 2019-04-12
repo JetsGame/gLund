@@ -4,7 +4,7 @@
 import keras.backend as K
 from glund.read_data import Jets
 from glund.JetTree import JetTree, LundImage
-from glund.tools import loss_calc
+from glund.tools import loss_calc, loss_calc_raw
 from glund.model import build_model
 from glund.preprocess import build_preprocessor
 from hyperopt import fmin, tpe, hp, Trials, space_eval, STATUS_OK
@@ -117,10 +117,9 @@ def build_and_train_model(setup):
     gen_sample = model.generate(setup['ngen'])
 
     # get the raw loss, evaluated on gan input and generated sample
-    print(gen_sample.shape, img_train.shape)
     print('[+] Calculating loss on raw training data')
-    loss_raw = loss_calc(gen_sample[:min(setup['ngen'],len(img_train))],
-                         img_train[:min(setup['ngen'],len(img_train))])
+    loss_raw = loss_calc_raw(preprocess.unmask(gen_sample[:min(setup['ngen'],len(img_train))]),
+                             preprocess.unmask(img_train[:min(setup['ngen'],len(img_train))]))
     
     # retransform the generated sample to image space
     gen_sample = preprocess.inverse(gen_sample)

@@ -1,6 +1,7 @@
 # This file is part of gLund by S. Carrazza and F. A. Dreyer
 
 import numpy as np
+from skimage.measure import compare_ssim as ssim
 
 #----------------------------------------------------------------------
 def loss_calc(imgs_gen, imgs_ref):
@@ -37,6 +38,28 @@ def loss_calc(imgs_gen, imgs_ref):
           % (act_avg_loss, act_var_loss, img_loss))
     
     return loss
+
+#----------------------------------------------------------------------
+def loss_calc_raw(imgs_gen, imgs_ref):
+    """ 
+    Calculate a loss on the raw images. 
+    The loss function contains two components:
+     - img_loss:  the norm of the difference between the average of the 
+                  images of the two samples
+     - ssim_loss: difference in ssim values between 1000 random pairs of
+                  reference samples, and reference+generated samples
+    """
+    img_loss  = np.linalg.norm(np.average(imgs_gen,axis=0)-np.average(imgs_ref,axis=0))
+    nv=1000
+    ssim_in  = np.zeros(1000)
+    ssim_out = np.zeros(1000)
+    for i in range(nv):
+        p=np.random.choice(min(len(imgs_gen),len(imgs_ref)),(2,1),replace=False)[:,0]
+        ssim_in[i]  = ssim(imgs_ref[p[0]], imgs_ref[p[1]])
+        ssim_out[i] = ssim(imgs_ref[p[0]], imgs_gen[p[1]])
+    ssim_loss = 5* (np.average(ssim_in) - np.average(ssim_out))
+    print('Raw loss: %f\t(%f, %f)' % (img_loss+ssim_loss,img_loss,ssim_loss))
+    return img_loss + ssim_loss
 
 #----------------------------------------------------------------------
 def zca_whiten(X):

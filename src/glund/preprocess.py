@@ -78,6 +78,20 @@ class Preprocessor:
         return result.reshape(len(data),self.shape[0],self.shape[1])
 
     #----------------------------------------------------------------------
+    def unmask(self, data, invert_method=True):
+        """Return to image space, but without inverting the scaler. Only for loss calculation!"""
+        if not self.flatten:
+            data = data.reshape(-1, self.shape[0]*self.shape[1])
+        if invert_method:
+            data = self._method_inverse(data)
+        if isinstance(self.nonzero_selector,np.ndarray):
+            result = np.zeros((len(data),self.shape[0]*self.shape[1]))
+            result[:, self.nonzero_selector] = data[:,:]
+        else:
+            result = data
+        return result.reshape(len(data),self.shape[0],self.shape[1])
+        
+    #----------------------------------------------------------------------
     def _method_fit(self, data):
         pass
 
