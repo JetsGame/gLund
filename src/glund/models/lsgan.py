@@ -18,7 +18,7 @@ class LSGAN():
     def __init__(self, hps, length=28*28):
         self.length = length
         self.shape  = (self.length,)
-        self.latent_dim = hps['latent_dim']
+        self.latent_dim = hps['latdim']
 
         # opt =  Adam(0.0002, 0.5)
         opt = build_optimizer(hps)
