@@ -69,7 +69,7 @@ class VAE(object):
         # build decoder model
         latent_inputs = Input(shape=(self.latent_dim,), name='z_sampling')
         x = Dense(self.intermediate_dim, activation='relu')(latent_inputs)
-        outputs = Dense(self.length, activation='sigmoid')(x)
+        outputs = Dense(self.length, activation='tanh')(x)
 
         # instantiate decoder model
         decoder = Model(latent_inputs, outputs, name='decoder')
