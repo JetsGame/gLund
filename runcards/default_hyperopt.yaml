@@ -43,6 +43,8 @@ learning_rate: hp.loguniform('learning_rate', -10, 0)
 opt_decay: 0.000000008 # => 8e-9
 
 # GAN architecture parameters
-nn_smallest_unit: 256
-nn_alpha: 0.2
+nn_units_d: 256
+nn_units_g: 256
+nn_alpha_d: 0.2
+nn_alpha_g: 0.2
 nn_momentum: 0.8

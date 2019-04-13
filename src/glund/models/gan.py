@@ -22,10 +22,12 @@ class GAN(object):
         opt = build_optimizer(hps)
 
         # allocate generator and discriminant
-        self.generator = self.build_generator(units=hps['nn_smallest_unit'],
-                                              alpha=hps['nn_alpha'], momentum=hps['nn_momentum'])
+        self.generator = self.build_generator(units=hps['nn_units_g'],
+                                              alpha=hps['nn_alpha_g'],
+                                              momentum=hps['nn_momentum'])
         self.generator.compile(loss='binary_crossentropy', optimizer=opt)
-        self.discriminator = self.build_discriminator(units=hps['nn_smallest_unit'], alpha=hps['nn_alpha'])
+        self.discriminator = self.build_discriminator(units=hps['nn_units_d'],
+                                                      alpha=hps['nn_alpha_d'])
         self.discriminator.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 
         self.adversarial_model = self.ad_model()

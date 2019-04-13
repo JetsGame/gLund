@@ -24,14 +24,16 @@ class LSGAN():
         opt = build_optimizer(hps)
 
         # Build and compile the discriminator
-        self.discriminator = self.build_discriminator(units=hps['nn_smallest_unit'],alpha=hps['nn_alpha'])
+        self.discriminator = self.build_discriminator(units=hps['nn_units_d'],
+                                                      alpha=hps['nn_alpha_d'])
         self.discriminator.compile(loss='mse',
             optimizer=opt,
             metrics=['accuracy'])
 
         # Build the generator
-        self.generator = self.build_generator(units=hps['nn_smallest_unit'],
-                                              alpha=hps['nn_alpha'], momentum=hps['nn_momentum'])
+        self.generator = self.build_generator(units=hps['nn_units_g'],
+                                              alpha=hps['nn_alpha_g'],
+                                              momentum=hps['nn_momentum'])
 
         # The generator takes noise as input and generated imgs
         z = Input(shape=(self.latent_dim,))

@@ -23,17 +23,17 @@ class AdversarialAutoencoder():
         opt = build_optimizer(hps)
         
         # Build and compile the discriminator
-        self.discriminator = self.build_discriminator(units=hps['nn_smallest_unit'],
-                                                      alpha=hps['nn_alpha'])
+        self.discriminator = self.build_discriminator(units=hps['nn_units_discr'],
+                                                      alpha=hps['nn_alpha_discr'])
         self.discriminator.compile(loss='binary_crossentropy',
                                    optimizer=opt,
                                    metrics=['accuracy'])
 
         # Build the encoder / decoder
-        self.encoder = self.build_encoder(units=hps['nn_smallest_unit'],
-                                          alpha=hps['nn_alpha'])
-        self.decoder = self.build_decoder(units=hps['nn_smallest_unit'],
-                                          alpha=hps['nn_alpha'])
+        self.encoder = self.build_encoder(units=hps['nn_units_enc'],
+                                          alpha=hps['nn_alpha_enc'])
+        self.decoder = self.build_decoder(units=hps['nn_units_dec'],
+                                          alpha=hps['nn_alpha_dec'])
 
         img = Input(shape=self.shape)
         # The generator takes the image, encodes it and reconstructs it

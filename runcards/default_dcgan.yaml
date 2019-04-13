@@ -42,7 +42,9 @@ learning_rate: 0.0002
 opt_beta1: 0.5
 
 # DCGAN architecture parameters
-nn_smallest_unit: 32
+nn_units_d: 32
+nn_units_g: 32
 nn_alpha: 0.2
-nn_momentum: 0.8
+nn_momentum_d: 0.8
+nn_momentum_g: 0.8
 nn_dropout: 0.25

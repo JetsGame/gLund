@@ -42,7 +42,9 @@ learning_rate: 0.00005
 
 # WGANGP architecture parameters
 n_critic: 5
-nn_smallest_unit: 16
+nn_units_d: 16
+nn_units_g: 16
 nn_alpha: 0.2
-nn_momentum: 0.8
+nn_momentum_d: 0.8
+nn_momentum_g: 0.8
 nn_dropout: 0.25

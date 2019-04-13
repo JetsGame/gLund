@@ -27,16 +27,17 @@ class DCGAN():
         opt = build_optimizer(hps)
         
         # Build and compile the discriminator
-        self.discriminator = self.build_discriminator(units=hps['nn_smallest_unit'],
+        self.discriminator = self.build_discriminator(units=hps['nn_units_d'],
                                                       alpha=hps['nn_alpha'],
-                                                      momentum=hps['nn_momentum'],
+                                                      momentum=hps['nn_momentum_d'],
                                                       dropout=hps['nn_dropout'])
         self.discriminator.compile(loss='binary_crossentropy',
                                    optimizer=opt,
                                    metrics=['accuracy'])
 
         # Build the generator
-        self.generator = self.build_generator(units=hps['nn_smallest_unit'], momentum=hps['nn_momentum'])
+        self.generator = self.build_generator(units=hps['nn_units_g'],
+                                              momentum=hps['nn_momentum_g'])
 
         # The generator takes noise as input and generates imgs
         z = Input(shape=(self.latent_dim,))

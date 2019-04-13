@@ -43,5 +43,9 @@ learning_rate: 0.0002
 opt_beta1: 0.5
 
 # AAE architecture parameters
-nn_smallest_unit: 256
-nn_alpha: 0.2
+nn_units_discr: 256
+nn_units_enc: 256
+nn_units_dec: 256
+nn_alpha_discr: 0.2
+nn_alpha_enc: 0.2
+nn_alpha_dec: 0.2

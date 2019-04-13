@@ -47,11 +47,11 @@ class WGANGP():
         opt = build_optimizer(hps)
 
         # Build the generator and critic
-        self.generator = self.build_generator(units=hps['nn_smallest_unit'],
-                                              momentum=hps['nn_momentum'])
-        self.critic = self.build_critic(units=hps['nn_smallest_unit'],
+        self.generator = self.build_generator(units=hps['nn_units_g'],
+                                              momentum=hps['nn_momentum_g'])
+        self.critic = self.build_critic(units=hps['nn_units_d'],
                                         alpha=hps['nn_alpha'],
-                                        momentum=hps['nn_momentum'],
+                                        momentum=hps['nn_momentum_d'],
                                         dropout=hps['nn_dropout'])
 
         #-------------------------------
