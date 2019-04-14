@@ -28,6 +28,8 @@ def run_hyperparameter_scan(search_space, max_evals, cluster, folder):
     best_setup = space_eval(search_space, best)
     print('\n[+] Best scan setup:')
     pprint.pprint(best_setup)
+    with open('%s/best-model.yaml' % folder, 'w') as wfp:
+        yaml.dump(best_setup, wfp, default_flow_style=False)
     log = '%s/hyperopt_log_{}.pickle'.format(time()) % folder
     with open(log, 'wb') as wfp:
         print(f'[+] Saving trials in {log}')
