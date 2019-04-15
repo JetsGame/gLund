@@ -16,7 +16,8 @@ def build_preprocessor(input_model, setup):
         preprocess = PreprocessorPCA(setup['pca_fraction'], whiten=False)
     elif setup['zca']:
         print('[+] Setting up ZCA preprocessing pipeline')
-        preprocess = PreprocessorZCA(flatten=flat_input, remove_zero=flat_input)
+        preprocess = PreprocessorZCA(scaler=True, flatten=flat_input,
+                                     remove_zero=flat_input)
     else:
         print('[+] Setting up minimal preprocessing pipeline')
         preprocess = Preprocessor(scaler=True, flatten=flat_input,
@@ -33,7 +34,7 @@ class Preprocessor:
         self.scaler = StandardScaler() if scaler else None
         if not flatten and remove_zero:
             raise Exception('Preprocess: can not mask zero entries for unflattened inputs')
-        self.nonzero_selector = remove_zero
+        self.remove_zero = remove_zero
         self.flatten = flatten
         self.shape = None
 
@@ -42,9 +43,9 @@ class Preprocessor:
         """Set up the preprocessing pipeline"""
         self.shape = data.shape[1:]
         data = data.reshape(-1, data.shape[1]*data.shape[2])
-        if self.nonzero_selector:
-            self.nonzero_selector = np.where(np.sum(np.square(data), axis=0) > 0.0)[0]
-            data = data[:,self.nonzero_selector]
+        self.zero_mask = np.where(np.sum(np.square(data), axis=0) > 0.0)[0]
+        if self.remove_zero:
+            data = data[:,self.zero_mask]
         if self.scaler:
             self.scaler.fit(data)
         self._method_fit(data)
@@ -53,8 +54,8 @@ class Preprocessor:
     def transform(self, data):
         """Apply preprocessing to input data"""
         data = data.reshape(-1, data.shape[1]*data.shape[2])
-        if isinstance(self.nonzero_selector,np.ndarray):
-            data = data[:,self.nonzero_selector]
+        if self.remove_zero:
+            data = data[:,self.zero_mask]
         if self.scaler:
             data = self.scaler.transform(data)
         data = self._method_transform(data)
@@ -70,11 +71,13 @@ class Preprocessor:
         data = self._method_inverse(data)
         if self.scaler:
             data = self.scaler.inverse_transform(data)
-        if isinstance(self.nonzero_selector,np.ndarray):
+        if self.remove_zero:
             result = np.zeros((len(data),self.shape[0]*self.shape[1]))
-            result[:, self.nonzero_selector] = data[:,:]
+            result[:, self.zero_mask] = data[:,:]
         else:
             result = data
+        if not self.flatten:
+            result = self.mask(result)
         return result.reshape(len(data),self.shape[0],self.shape[1])
 
     #----------------------------------------------------------------------
@@ -84,13 +87,20 @@ class Preprocessor:
             data = data.reshape(-1, self.shape[0]*self.shape[1])
         if invert_method:
             data = self._method_inverse(data)
-        if isinstance(self.nonzero_selector,np.ndarray):
+        if self.remove_zero:
             result = np.zeros((len(data),self.shape[0]*self.shape[1]))
-            result[:, self.nonzero_selector] = data[:,:]
+            result[:, self.zero_mask] = data[:,:]
         else:
             result = data
         return result.reshape(len(data),self.shape[0],self.shape[1])
-        
+
+    #----------------------------------------------------------------------
+    def mask(self, data):
+        """Apply a mask to set to zero all pixels that were unactivated in the input."""
+        result = np.zeros(data.shape)
+        result[:, self.zero_mask] = data[:, self.zero_mask]
+        return result
+
     #----------------------------------------------------------------------
     def _method_fit(self, data):
         pass
