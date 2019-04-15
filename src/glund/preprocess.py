@@ -3,7 +3,7 @@
 from glund.models.autoencoder import Autoencoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from glund.tools import zca_whiten
+from glund.tools import ZCA
 import numpy as np
 
 #----------------------------------------------------------------------
@@ -148,16 +148,15 @@ class PreprocessorZCA(Preprocessor):
 
     #----------------------------------------------------------------------
     def _method_fit(self, data):
-        pass
+        self.zca = ZCA().fit(data)
 
     #----------------------------------------------------------------------
     def _method_transform(self, data):
-        result, self.zca = zca_whiten(data)
-        return result
+        return self.zca.transform(data)
 
     #----------------------------------------------------------------------
     def _method_inverse(self, data):
-        return np.dot(data, self.zca)
+        return self.zca.inverse_transform(data)
 
 
 #======================================================================
