@@ -8,11 +8,14 @@ from glund.models.wgan_gp import WGANGP
 from glund.models.wgan import WGAN
 from glund.models.vae import VAE
 from glund.models.aae import AdversarialAutoencoder
+from glund.preprocess import load_preprocessor
+import yaml
 
 #----------------------------------------------------------------------
-def build_model(input_model, setup, length=None):
+def build_model(setup, length=None):
     """Return one of the generative models"""
     length=length if length else setup['npx']**2
+    input_model = setup['model']
     if input_model == 'wgan':
         print('[+] Setting up WGAN')
         model = WGAN(setup)
@@ -40,3 +43,12 @@ def build_model(input_model, setup, length=None):
     else:
         raise Exception('build_model: invalid model choice')
     return model
+
+#----------------------------------------------------------------------
+def load_model_and_preprocessor(folder):
+    with open(f'{folder}/input-runcard.json','r') as stream: 
+        setup=yaml.load(stream)
+    preproc = load_preprocessor(folder, setup)
+    model = build_model(setup, preproc.length)
+    model.load(folder)
+    return model, preproc

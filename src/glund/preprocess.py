@@ -5,10 +5,11 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from glund.tools import ZCA
 import numpy as np
+import pickle
 
 #----------------------------------------------------------------------
-def build_preprocessor(input_model, setup):
-    flat_input = input_model in ('gan', 'vae', 'bgan', 'aae', 'lsgan')
+def build_preprocessor(setup):
+    flat_input = setup['model'] in ('gan', 'vae', 'bgan', 'aae', 'lsgan')
     if setup['pca']:
         if not flat_input:
             raise Exception('build_preprocessor: pca unavailable for this model')
@@ -24,6 +25,11 @@ def build_preprocessor(input_model, setup):
                                   remove_zero=flat_input)
     return preprocess
 
+#----------------------------------------------------------------------
+def load_preprocessor(folder, setup):
+    preprocess = build_preprocessor(setup)
+    preprocess.load(folder)
+    return preprocess
 
 #======================================================================
 class Preprocessor:
@@ -37,6 +43,7 @@ class Preprocessor:
         self.remove_zero = remove_zero
         self.flatten = flatten
         self.shape = None
+        self.length = None
 
     #----------------------------------------------------------------------    
     def fit(self, data):
@@ -48,6 +55,7 @@ class Preprocessor:
             data = data[:,self.zero_mask]
         if self.scaler:
             self.scaler.fit(data)
+        self.length = data.shape[1]
         self._method_fit(data)
 
     #----------------------------------------------------------------------
@@ -102,6 +110,39 @@ class Preprocessor:
         return result
 
     #----------------------------------------------------------------------
+    def save(self, folder):
+        preprocessor = {'shape': self.shape,
+                        'length': self.length,
+                        'flatten': self.flatten,
+                        'remove_zero': self.remove_zero,
+                        'has_scaler': True if self.scaler else False,
+                        'zero_mask': self.zero_mask}
+        if self.scaler:
+            preprocessor['scaler'] = {'scale': self.scaler.scale_,
+                                      'mean': self.scaler.mean_,
+                                      'var': self.scaler.var_,
+                                      'n': self.scaler.n_samples_seen_}
+        self._method_save(preprocessor)
+        with open(f'{folder}/preprocessor.pkl','wb') as f:
+            pickle.dump(preprocessor, f)
+
+    def load(self, folder):
+        with open(f'{folder}/preprocessor.pkl','rb') as f:
+            preprocessor = pickle.load(f)
+        self.shape       = preprocessor['shape']
+        self.length      = preprocessor['length']
+        self.flatten     = preprocessor['flatten']
+        self.remove_zero = preprocessor['remove_zero']
+        self.zero_mask   = preprocessor['zero_mask']
+        self.scaler = StandardScaler() if preprocessor['has_scaler'] else None
+        if self.scaler:
+            self.scaler.scale_ = preprocessor['scaler']['scale']
+            self.scaler.mean_  = preprocessor['scaler']['mean']
+            self.scaler.var_   = preprocessor['scaler']['var']
+            self.scaler.n_samples_seen_ = preprocessor['scaler']['n']
+        self._method_load(preprocessor)
+
+    #----------------------------------------------------------------------
     def _method_fit(self, data):
         pass
 
@@ -113,6 +154,13 @@ class Preprocessor:
     def _method_inverse(self, data):
         return data
 
+    #----------------------------------------------------------------------
+    def _method_save(self, preprocessor):
+        pass
+
+    #----------------------------------------------------------------------
+    def _method_load(self, preprocessor):
+        pass
 
 #======================================================================
 class PreprocessorPCA(Preprocessor):
@@ -127,6 +175,7 @@ class PreprocessorPCA(Preprocessor):
     #----------------------------------------------------------------------
     def _method_fit(self, data):
         self.pca.fit(data)
+        self.length = self.pca.n_components_
 
     #----------------------------------------------------------------------
     def _method_transform(self, data):
@@ -136,6 +185,41 @@ class PreprocessorPCA(Preprocessor):
     def _method_inverse(self, data):
         return self.pca.inverse_transform(data)
 
+    #----------------------------------------------------------------------
+    def _method_save(self, preprocessor):
+        preprocessor['pca'] = \
+            {'n_components': self.pca.n_components,
+             'n_features': self.pca.n_features_,
+             'n_samples': self.pca.n_samples_,
+             'n_components_': self.pca.n_components_,
+             'components_': self.pca.components_,
+             'whiten': self.pca.whiten,
+             'components': self.pca.components_,
+             'explained_var': self.pca.explained_variance_,
+             'explained_var_ratio': self.pca.explained_variance_ratio_,
+             'singular_values': self.pca.singular_values_,
+             'mean': self.pca.mean_,
+             'ncomp': self.pca.n_components_,
+             'noise_var': self.pca.noise_variance_}
+
+    #----------------------------------------------------------------------
+    def _method_load(self, preprocessor):
+        self.pca = PCA()
+        self.pca.n_components = preprocessor['pca']['n_components']
+        self.pca.n_features_ = preprocessor['pca']['n_features']
+        self.pca.n_samples_ = preprocessor['pca']['n_samples']
+        self.pca.n_components_ = preprocessor['pca']['n_components_']
+        self.pca.components_ = preprocessor['pca']['components_']
+        self.pca.whiten = preprocessor['pca']['whiten']
+        self.pca.components_ = preprocessor['pca']['components']
+        self.pca.explained_variance_ = preprocessor['pca']['explained_var']
+        self.pca.explained_variance_ratio_ = preprocessor['pca']['explained_var_ratio']
+        self.pca.singular_values_ = preprocessor['pca']['singular_values']
+        self.pca.mean_ = preprocessor['pca']['mean']
+        self.pca.n_components_ = preprocessor['pca']['ncomp']
+        self.pca.noise_variance_ = preprocessor['pca']['noise_var']
+        self.length = self.pca.n_components_
+        
 
 #======================================================================
 class PreprocessorZCA(Preprocessor):
@@ -158,6 +242,24 @@ class PreprocessorZCA(Preprocessor):
     def _method_inverse(self, data):
         return self.zca.inverse_transform(data)
 
+    #----------------------------------------------------------------------
+    def _method_save(self, preprocessor):
+        preprocessor['zca'] = \
+            {'regularization': self.zca.regularization,
+             'copy': self.zca.copy,
+             'mean': self.zca.mean_,
+             'whiten': self.zca.whiten_,
+             'dewhiten': self.zca.dewhiten_}
+
+    #----------------------------------------------------------------------
+    def _method_load(self, preprocessor):
+        self.zca = ZCA()
+        self.zca.regularization = preprocessor['zca']['regularization']
+        self.zca.copy = preprocessor['zca']['copy']
+        self.zca.mean_ = preprocessor['zca']['mean']
+        self.zca.whiten_ = preprocessor['zca']['whiten']
+        self.zca.dewhiten_ = preprocessor['zca']['dewhiten']
+        
 
 #======================================================================
 class PreprocessorAE(Preprocessor):
@@ -182,3 +284,11 @@ class PreprocessorAE(Preprocessor):
     #----------------------------------------------------------------------
     def _method_inverse(self, data):
         return self.ae.decode(data)
+
+    #----------------------------------------------------------------------
+    def _method_save(self, preprocessor):
+        raise Exception('PreprocessorAE can not be saved to file.')
+
+    #----------------------------------------------------------------------
+    def _method_load(self, preprocessor):
+        raise Exception('PreprocessorAE can not be loaded from file.')

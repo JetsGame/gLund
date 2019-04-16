@@ -53,9 +53,8 @@ def build_and_train_model(setup):
     """Training model"""
     print('[+] Training model')
     K.clear_session()
-    input_model = setup['model']
-    if input_model not in ('gan', 'dcgan', 'wgan', 'wgangp', 'vae',
-                           'aae', 'bgan', 'lsgan'):
+    if setup['model'] not in ('gan', 'dcgan', 'wgan', 'wgangp', 'vae',
+                              'aae', 'bgan', 'lsgan'):
         raise ValueError('Invalid input: choose one model at a time.')
 
     # read in the data set
@@ -66,7 +65,7 @@ def build_and_train_model(setup):
         # mnist data and training the model on this.
         (img_data, _), (_, _) = mnist.load_data()
         # Rescale -1 to 1
-        if input_model is not 'vae':
+        if setup['model'] is not 'vae':
             img_data = (img_data.astype(np.float32) - 127.5) / 127.5
         else:
             img_data = img_data.astype('float32') / 255
@@ -92,13 +91,13 @@ def build_and_train_model(setup):
         for i in range(nev):
             batch_averaged_img[i] = \
                 np.average(img_data[np.random.choice(img_data.shape[0], setup['navg'],
-                                                    replace=False), :], axis=0)
+                                                     replace=False), :], axis=0)
         img_train = batch_averaged_img
     else:
         img_train = img_data
 
     # set up a preprocessing pipeline
-    preprocess = build_preprocessor(input_model, setup)
+    preprocess = build_preprocessor(setup)
     
     # prepare the training data for the model training
     print('[+] Fitting the preprocessor')
@@ -108,7 +107,7 @@ def build_and_train_model(setup):
     img_train = preprocess.transform(img_train)
     
     # now set up the model
-    model = build_model(input_model, setup, length=(img_train.shape[1]))
+    model = build_model(setup, length=(img_train.shape[1]))
 
     # train on the images
     print('[+] Training the generative model')
@@ -144,7 +143,7 @@ def build_and_train_model(setup):
         res = {'loss': loss[0] if setup['monitor_final_loss'] else loss[1],
                'status': STATUS_OK}
     else:
-        res = model, gen_sample, loss
+        res = model, gen_sample, loss, preprocess
     return res
 
 
@@ -190,7 +189,7 @@ def main():
     setup['scan'] = False
     
     # build and train the model
-    model, gen_sample, loss = build_and_train_model(setup)
+    model, gen_sample, loss, preproc = build_and_train_model(setup)
 
     # write out a file with basic information on the run
     with open('%s/info.txt' % folder,'w') as f:
@@ -206,6 +205,9 @@ def main():
     # save the model to file
     model.save(folder)
 
+    # save the preprocessor
+    preproc.save(folder)
+    
     # save a generated sample to file and plot the average image
     genfn = '%s/generated_images' % folder
     np.save(genfn, gen_sample)
