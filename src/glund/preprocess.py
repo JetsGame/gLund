@@ -54,7 +54,7 @@ class Preprocessor:
         if self.remove_zero:
             data = data[:,self.zero_mask]
         if self.scaler:
-            self.scaler.fit(data)
+            data = self.scaler.fit_transform(data)
         self.length = data.shape[1]
         self._method_fit(data)
 
