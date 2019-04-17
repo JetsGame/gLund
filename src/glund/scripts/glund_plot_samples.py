@@ -12,14 +12,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 
     
 #----------------------------------------------------------------------
-def plot_lund(filename, figname, eps=None, rnd=False):
+def plot_lund(filename, figname):
     """Plot a few samples of lund images as well as the average density."""
     r, c = 5, 5
     imgs = np.load(filename)
-    if eps:
-        imgs[imgs<eps]=0
-    if rnd:
-        imgs = np.round(imgs)
     sample = imgs[np.random.choice(imgs.shape[0], r*c, replace=False), :]
     with PdfPages(figname) as pdf:
         fig, axs = plt.subplots(r, c)
@@ -38,22 +34,16 @@ def plot_lund(filename, figname, eps=None, rnd=False):
 
         
 #----------------------------------------------------------------------
-def plot_lund_with_ref(filename, reference, figname, eps=None,
-                       rnd=False, prob=False):
+def plot_lund_with_ref(filename, reference, figname):
     """Plot a samples of lund images and the average density along with reference data."""
     r, c = 5, 5
     imgs = np.load(filename)
-    if eps:
-        imgs[imgs<eps]=0.0
-    if rnd:
-        imgs = np.round(imgs)
     sample = imgs[np.random.choice(imgs.shape[0], r*c, replace=False), :]
     # now read in the pythia reference sample
     reader=Jets(reference, imgs.shape[0])
     events=reader.values() 
     imgs_ref=np.zeros((len(events), imgs.shape[1], imgs.shape[2]))
-    li_gen=LundImage(npxlx = imgs.shape[1], npxly = imgs.shape[2],
-                     norm_to_one=prob) 
+    li_gen=LundImage(npxlx = imgs.shape[1], npxly = imgs.shape[2]) 
     for i, jet in enumerate(events): 
         tree = JetTree(jet) 
         imgs_ref[i]=li_gen(tree).reshape(imgs.shape[1], imgs.shape[2])
@@ -121,18 +111,11 @@ def main():
     parser = argparse.ArgumentParser(description='Plot a model.')
     parser.add_argument('--data', type=str, required=True, help='Generated images')
     parser.add_argument('--reference', type=str, default=None, help='Pythia reference')
-    parser.add_argument('--round', action='store_true',
-                        help='Round all pixel values to nearest integer')
-    parser.add_argument('--epsilon', action='store', default=None,
-                        type=float, help='Threshold for pixel activation.')
-    parser.add_argument('--deterministic', action='store_true', dest='det',
-                        help='Round all pixel values to nearest integer')
     args = parser.parse_args()
 
     if args.reference:
         figname=args.data.split(os.extsep)[0]+'.pdf'
-        plot_lund_with_ref(args.data, args.reference, figname,
-                           args.epsilon, args.round, not args.det)
+        plot_lund_with_ref(args.data, args.reference, figname)
     else:
         figname=args.data.split(os.extsep)[0]+'.pdf'
-        plot_lund(args.data, figname, args.epsilon, args.round)
+        plot_lund(args.data, figname)

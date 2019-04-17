@@ -45,9 +45,7 @@ def build_model(setup, length=None):
     return model
 
 #----------------------------------------------------------------------
-def load_model_and_preprocessor(folder):
-    with open(f'{folder}/input-runcard.json','r') as stream: 
-        setup=yaml.load(stream)
+def load_model_and_preprocessor(folder, setup):
     preproc = load_preprocessor(folder, setup)
     model = build_model(setup, preproc.length)
     model.load(folder)

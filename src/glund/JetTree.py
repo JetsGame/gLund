@@ -65,7 +65,7 @@ class LundImage:
 
     #----------------------------------------------------------------------
     def __init__(self, xval = [0.0, 7.0], yval = [-3.0, 7.0],
-                 npxlx = 50, npxly = None, norm_to_one = False):
+                 npxlx = 50, npxly = None, norm_to_one = True):
         """Set up the LundImage instance."""
         # set up the pixel numbers
         self.npxlx = npxlx

@@ -48,7 +48,7 @@ def load_yaml(runcard_file):
     return runcard
 
 
-
+#----------------------------------------------------------------------
 def build_and_train_model(setup):
     """Training model"""
     print('[+] Training model')
@@ -76,10 +76,7 @@ def build_and_train_model(setup):
         reader=Jets(setup['data'], setup['nev'])
         events=reader.values()
         img_data=np.zeros((len(events), setup['npx'], setup['npx'], 1))
-        if setup['deterministic']:
-            li_gen = LundImage(npxlx = setup['npx'])
-        else:
-            li_gen=LundImage(npxlx = setup['npx'], norm_to_one=True) 
+        li_gen=LundImage(npxlx = setup['npx'])
         for i, jet in enumerate(events): 
             tree = JetTree(jet) 
             img_data[i]=li_gen(tree).reshape(setup['npx'], setup['npx'], 1)

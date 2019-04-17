@@ -21,6 +21,7 @@ setup(name= "glund",
       entry_points = {'console_scripts':
                       ['glund = glund.scripts.glund:main',
                        'glund_plot_samples = glund.scripts.glund_plot_samples:main',
+                       'glund_generate = glund.scripts.glund_generate:main',
                        'glund_test_encoding = glund.scripts.glund_test_encoding:main']},
       package_dir = {'': 'src'},
       packages = find_packages('src'),
