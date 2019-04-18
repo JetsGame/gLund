@@ -7,6 +7,7 @@ from glund.JetTree import JetTree, LundImage
 from glund.tools import loss_calc, loss_calc_raw
 from glund.model import build_model
 from glund.preprocess import build_preprocessor
+from glund.plotting import plot_lund_with_ref
 from hyperopt import fmin, tpe, hp, Trials, space_eval, STATUS_OK
 from hyperopt.mongoexp import MongoTrials
 import matplotlib.pyplot as plt
@@ -158,6 +159,8 @@ def main():
                         help='Enable hyperopt scan.')
     parser.add_argument('--cluster', default=None, 
                         type=str, help='Enable cluster scan.')
+    parser.add_argument('--plot-samples', action='store_true', dest='plot_samples',
+                        help='Generate document with reference and model samples')
     args = parser.parse_args()
 
     # check input is coherent
@@ -208,7 +211,6 @@ def main():
     # save a generated sample to file and plot the average image
     genfn = '%s/generated_images' % folder
     np.save(genfn, gen_sample)
-    plt.imshow(np.average(gen_sample, axis=0))
-    plt.savefig('%s/average_image.png' % folder)
 
-    
+    if args.plot_samples:
+        plot_lund_with_ref(f'{genfn}.npy', setup['data'], f'{genfn}.pdf')

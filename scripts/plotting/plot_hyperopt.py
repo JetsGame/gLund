@@ -41,6 +41,7 @@ def plot_scans(df, bestdf, trials, bestid, file):
                 axs[p+1].set_xlim([1e-5, 1])
         else:
             sns.violinplot(df.get(k), df.get('loss'), ax=axs[p+1], palette="Set2",cut=0.0)
+            sns.stripplot(df.get(k), df.get('loss'), ax=axs[p+1], color='gray', alpha=0.4)
         axs[p+1].set_xlabel(k)
         axs[p+1].scatter(bestdf.get(k), bestdf.get('loss'), color='orange')
 
