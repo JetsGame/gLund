@@ -8,7 +8,7 @@ nev: -1 # -1 = all data
 
 # Select model, available options are:
 # gan, dcgan, wgan, wgangp, vae, aae, bgan, lsgan
-model: gan
+model: lsgan
 
 # Number of epochs
 epochs: 1000
@@ -23,7 +23,7 @@ ngen: 5000
 latdim: 100
 
 # Number of pixels
-npx: 20
+npx: 24
 
 # Perform PCA preprocessing
 pca: true
@@ -33,14 +33,13 @@ pca_fraction: 0.95
 zca: false
 
 # Number of pixel average
-navg: 4
-deterministic: false
+navg: 20
 
 # Optimizer parameters
 # options are: Adam, RMSprop, Adagrad, SGD
 optimizer: Adam
 learning_rate: 0.0002
-opt_decay: 0.000000008 # => 8e-9
+opt_beta1: 0.5
 
 # GAN architecture parameters
 nn_units_d: 256

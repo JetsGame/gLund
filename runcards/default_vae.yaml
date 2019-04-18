@@ -11,7 +11,7 @@ nev: -1 # -1 = all data
 model: vae
 
 # Number of epochs
-epochs: 100
+epochs: 20
 
 # Batch size
 batch_size: 32
@@ -20,21 +20,19 @@ batch_size: 32
 ngen: 5000
 
 # Number of latent dimensions
-latdim: 100
+latdim: 800
 
 # Number of pixels
-npx: 20
+npx: 24
 
 # Perform PCA preprocessing
-pca: true
-pca_fraction: 0.95
+pca: false
 
 # Perform ZCA preprocessing
-zca: false
+zca: true
 
 # Number of pixel average
-navg: 4
-deterministic: false
+navg: 20
 
 # Optimizer parameters
 # options are: Adam, RMSprop, Adagrad, SGD
@@ -43,5 +41,5 @@ learning_rate: 0.0003
 opt_beta1: 0.9
 
 # VAE architecture parameters
-mse_loss: false
+mse_loss: true
 nn_interm_dim: 512

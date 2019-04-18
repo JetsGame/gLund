@@ -6,7 +6,7 @@ from glund.read_data import Jets
 from glund.JetTree import JetTree, LundImage
 from glund.tools import loss_calc, loss_calc_raw
 from glund.model import build_model
-from glund.preprocess import build_preprocessor
+from glund.preprocess import build_preprocessor, Averager
 from glund.plotting import plot_lund_with_ref
 from hyperopt import fmin, tpe, hp, Trials, space_eval, STATUS_OK
 from hyperopt.mongoexp import MongoTrials
@@ -82,18 +82,9 @@ def build_and_train_model(setup):
             tree = JetTree(jet) 
             img_data[i]=li_gen(tree).reshape(setup['npx'], setup['npx'], 1)
 
-    if not setup['deterministic']:
-        # now reformat the training set as its average over n elements
-        nev = max(len(img_data),setup['nev'])
-        batch_averaged_img = np.zeros((nev, setup['npx'], setup['npx'], 1))
-        for i in range(nev):
-            batch_averaged_img[i] = \
-                np.average(img_data[np.random.choice(img_data.shape[0], setup['navg'],
-                                                     replace=False), :], axis=0)
-        img_train = batch_averaged_img
-    else:
-        img_train = img_data
-
+    avg = Averager(setup['navg'])
+    img_train = avg.transform(img_data)
+    
     # set up a preprocessing pipeline
     preprocess = build_preprocessor(setup)
     
@@ -122,14 +113,7 @@ def build_and_train_model(setup):
     
     # retransform the generated sample to image space
     gen_sample = preprocess.inverse(gen_sample)
-
-    if not setup['deterministic']:
-        # now interpret the probabilistic sample as physical images
-        for i,v in np.ndenumerate(gen_sample):
-            if v < np.random.uniform(0,1):
-                gen_sample[i]=0.0
-            else:
-                gen_sample[i]=1.0
+    gen_sample = avg.inverse(gen_sample)
 
     # get reference sample and generated sample for tests
     ref_sample = img_data.reshape(img_data.shape[0],setup['npx'],setup['npx'])\

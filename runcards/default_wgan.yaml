@@ -23,7 +23,7 @@ ngen: 5000
 latdim: 100
 
 # Number of pixels
-npx: 20
+npx: 24
 
 # Perform PCA preprocessing
 pca: false
@@ -32,8 +32,7 @@ pca: false
 zca: true
 
 # Number of pixel average
-navg: 4
-deterministic: false
+navg: 20
 
 # Optimizer parameters
 # options are: Adam, RMSprop, Adagrad, SGD

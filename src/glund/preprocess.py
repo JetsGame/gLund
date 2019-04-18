@@ -292,3 +292,35 @@ class PreprocessorAE(Preprocessor):
     #----------------------------------------------------------------------
     def _method_load(self, preprocessor):
         raise Exception('PreprocessorAE can not be loaded from file.')
+
+#======================================================================
+class Averager:
+    """Combine images in batches"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, navg):
+        self.navg = navg
+
+    #----------------------------------------------------------------------
+    def transform(self, data):
+        """
+        Transform a numpy array of images into an array of averaged
+        images of equal length.
+        """
+        batch_avg_img = np.zeros(data.shape)
+        for i in range(len(data)):
+            batch_avg_img[i] = \
+                np.average(data[np.random.choice(data.shape[0], self.navg,
+                                                 replace=False), :], axis=0)
+        return batch_avg_img
+
+    #----------------------------------------------------------------------
+    def inverse(self, data):
+        """
+        Sample an array of averaged images and return an array of physical images.
+        """
+        sampled_data = np.zeros(data.shape)
+        for i,v in np.ndenumerate(data):
+            if v >= np.random.uniform(0,1):
+                sampled_data[i]=1.0
+        return sampled_data
