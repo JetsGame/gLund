@@ -34,7 +34,7 @@ def plot_slice_kt(filedic, imgref, figname, npx=24):
                labels=['1', '0.5', '0.2', '0.1', '0.05','0.02', '0.01'])
     plt.xlabel('$\\Delta$')
     plt.ylabel('$\\rho(\\Delta, \\mathrm{fixed}\;k_t)$')
-    plt.text(0.8,0.01,'$%.2f < k_t [GeV] < %.2f$' % (kt_min,kt_max))
+    plt.text(0.8,0.01,'$%.2f < k_t\, \mathrm{[GeV]} < %.2f$' % (kt_min,kt_max))
     fig.subplots_adjust(bottom=0.15)
     plt.legend()
     plt.savefig(figname)
