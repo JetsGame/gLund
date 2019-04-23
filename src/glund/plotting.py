@@ -79,8 +79,8 @@ def plot_lund_with_ref(filename, reference, figname):
         plt.close()
         fig=plt.figure()
         plt.title('generated/reference')
-        plt.imshow(np.divide(np.average(imgs,axis=0).transpose(), origin='lower',np.average(imgs_ref,axis=0)),
-                   vmin=0.5, vmax=1.5, cmap=cm.seismic)
+        plt.imshow(np.divide(np.average(imgs,axis=0).transpose(), np.average(imgs_ref,axis=0).transpose()),
+                   origin='lower', vmin=0.5, vmax=1.5, cmap=cm.seismic)
         plt.colorbar(orientation='vertical')
         pdf.savefig()
         plt.close()
