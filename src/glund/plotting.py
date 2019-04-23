@@ -18,13 +18,13 @@ def plot_lund(filename, figname):
         cnt = 0
         for i in range(r):
             for j in range(c):
-                axs[i,j].imshow(sample[cnt, :,:], cmap='gray',vmin=0.0,vmax=2.0)
+                axs[i,j].imshow(sample[cnt, :,:].transpose(), origin='lower', cmap='gray',vmin=0.0,vmax=2.0)
                 axs[i,j].axis('off')
                 cnt += 1
         pdf.savefig()
         plt.close()
         fig=plt.figure()
-        plt.imshow(np.average(imgs,axis=0))
+        plt.imshow(np.average(imgs,axis=0).transpose(), origin='lower')
         plt.close()
         pdf.savefig(fig)
 
@@ -50,7 +50,7 @@ def plot_lund_with_ref(filename, reference, figname):
         cnt = 0
         for i in range(r):
             for j in range(c):
-                axs[i,j].imshow(imgs[cnt, :,:], cmap='gray',vmin=0.0,vmax=2.0)
+                axs[i,j].imshow(imgs[cnt, :,:].transpose(), origin='lower', cmap='gray',vmin=0.0,vmax=2.0)
                 axs[i,j].axis('off')
                 cnt += 1
         pdf.savefig()
@@ -60,26 +60,26 @@ def plot_lund_with_ref(filename, reference, figname):
         cnt = 0
         for i in range(r):
             for j in range(c):
-                axs[i,j].imshow(imgs_ref[cnt, :,:], cmap='gray',vmin=0.0,vmax=2.0)
+                axs[i,j].imshow(imgs_ref[cnt, :,:].transpose(), origin='lower', cmap='gray',vmin=0.0,vmax=2.0)
                 axs[i,j].axis('off')
                 cnt += 1
         pdf.savefig()
         plt.close()
         fig=plt.figure()
         plt.title('generated')
-        plt.imshow(np.average(imgs,axis=0),vmin=0.0,vmax=0.7)
+        plt.imshow(np.average(imgs,axis=0).transpose(), origin='lower',vmin=0.0,vmax=0.7)
         plt.colorbar(orientation='vertical', label=r'$\rho$')
         pdf.savefig()
         plt.close()
         fig=plt.figure()
         plt.title('reference')
-        plt.imshow(np.average(imgs_ref,axis=0),vmin=0.0, vmax=0.7)
+        plt.imshow(np.average(imgs_ref,axis=0).transpose(), origin='lower',vmin=0.0, vmax=0.7)
         plt.colorbar(orientation='vertical', label=r'$\rho$')
         pdf.savefig()
         plt.close()
         fig=plt.figure()
         plt.title('generated/reference')
-        plt.imshow(np.divide(np.average(imgs,axis=0),np.average(imgs_ref,axis=0)),
+        plt.imshow(np.divide(np.average(imgs,axis=0).transpose(), origin='lower',np.average(imgs_ref,axis=0)),
                    vmin=0.5, vmax=1.5, cmap=cm.seismic)
         plt.colorbar(orientation='vertical')
         pdf.savefig()
