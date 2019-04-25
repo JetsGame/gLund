@@ -54,7 +54,7 @@ def plot_lund_with_ref(filename, reference, figname):
         cnt = 0
         for i in range(r):
             for j in range(c):
-                axs[i,j].imshow(imgs[cnt, :,:].transpose(), origin='lower', cmap='gray',vmin=0.0,vmax=2.0)
+                axs[i,j].imshow(imgs[cnt, :,:].transpose(), origin='lower', cmap='gray',vmin=0.0,vmax=1.0)
                 axs[i,j].axis('off')
                 cnt += 1
         pdf.savefig()
@@ -64,7 +64,7 @@ def plot_lund_with_ref(filename, reference, figname):
         cnt = 0
         for i in range(r):
             for j in range(c):
-                axs[i,j].imshow(imgs_ref[cnt, :,:].transpose(), origin='lower', cmap='gray',vmin=0.0,vmax=2.0)
+                axs[i,j].imshow(imgs_ref[cnt, :,:].transpose(), origin='lower', cmap='gray',vmin=0.0,vmax=1.0)
                 axs[i,j].axis('off')
                 cnt += 1
         pdf.savefig()
