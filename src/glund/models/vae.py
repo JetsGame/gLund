@@ -102,7 +102,7 @@ class VAE(object):
     #----------------------------------------------------------------------
     def train(self,x_train, epochs=100, batch_size=128):
         x_train = np.reshape(x_train, [-1, self.length])
-        self.vae.fit(x_train, epochs=epochs)
+        self.vae.fit(x_train, epochs=epochs, batch_size=batch_size)
 
     # def train(self,x_train, x_test, epochs=100, batch_size=128):
     #     x_train = np.reshape(x_train, [-1, self.length])
