@@ -38,6 +38,7 @@ class VAE(object):
 
     #----------------------------------------------------------------------
     def __init__(self, hps, length=28*28):
+        self.beta = hps['beta']
         self.length = length
         self.latent_dim = hps['latdim']
         self.intermediate_dim = hps['nn_interm_dim']
@@ -89,13 +90,12 @@ class VAE(object):
         reconstruction_loss *= self.length
         kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
         kl_loss = K.sum(kl_loss, axis=-1)
-        kl_loss *= -0.5
+        kl_loss *= -0.5 * self.beta
         vae_loss = K.mean(reconstruction_loss + kl_loss)
         vae.add_loss(vae_loss)
-        #opt = Adam(0.0003, 0.9)
+
         opt = build_optimizer(hps)
         vae.compile(optimizer=opt)
-        # vae.compile(optimizer='adam')
         vae.summary()
         self.vae = vae
 

@@ -36,7 +36,7 @@ class Preprocessor:
     """Preprocessing pipeline"""
     
     #----------------------------------------------------------------------
-    def __init__(self, scaler, flatten, remove_zero, minmax=False):
+    def __init__(self, scaler, flatten, remove_zero, minmax=True):
         self.minmax=minmax
         if minmax:
             self.scaler = MinMaxScaler(feature_range=(-1,1)) if scaler else None
