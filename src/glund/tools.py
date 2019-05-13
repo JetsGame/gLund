@@ -54,14 +54,14 @@ def loss_calc_raw(imgs_gen, imgs_ref):
                   reference samples, and reference+generated samples
     """
     img_loss  = np.linalg.norm(np.average(imgs_gen,axis=0)-np.average(imgs_ref,axis=0))
-    nv=1000
-    ssim_in  = np.zeros(1000)
-    ssim_out = np.zeros(1000)
+    nv=5000
+    ssim_in  = np.zeros(nv)
+    ssim_out = np.zeros(nv)
     for i in range(nv):
         p=np.random.choice(min(len(imgs_gen),len(imgs_ref)),(2,1),replace=False)[:,0]
         ssim_in[i]  = ssim(imgs_ref[p[0]], imgs_ref[p[1]])
         ssim_out[i] = ssim(imgs_ref[p[0]], imgs_gen[p[1]])
-    ssim_loss = 5* (np.average(ssim_in) - np.average(ssim_out))
+    ssim_loss = 5* abs(np.average(ssim_in) - np.average(ssim_out))
     print('Raw loss: %f\t(%f, %f)' % (img_loss+ssim_loss,img_loss,ssim_loss))
     return img_loss + ssim_loss
 
