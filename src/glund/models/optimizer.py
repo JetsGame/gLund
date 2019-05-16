@@ -5,7 +5,7 @@ from keras.optimizers import Adam, RMSprop, SGD, Adagrad
 #----------------------------------------------------------------------
 def build_optimizer(hps):
     """Set up a keras optimizer"""
-    if isinstance(hps, dict):
+    if isinstance(hps['optimizer'], dict):
         hps = hps['optimizer']
     if hps['optimizer']=='Adam':
         opt = Adam(lr=hps['learning_rate'],
