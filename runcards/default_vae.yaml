@@ -25,6 +25,9 @@ latdim: 800
 # Number of pixels
 npx: 24
 
+# scaler for preprocessing
+scaler: minmax
+
 # Perform PCA preprocessing
 pca: false
 

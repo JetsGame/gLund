@@ -45,7 +45,7 @@ def plot_lund_with_ref(filename, reference, figname):
         from keras.datasets import mnist
         (imgs_ref, _), (_, _) = mnist.load_data()
         # Rescale -1 to 1
-        imgs_ref = imgs_ref.astype('float32') / 255
+        imgs_ref = (imgs_ref.astype(np.float32) - 127.5) / 127.5
     else:
         # now read in the pythia reference sample
         reader=Jets(reference, imgs.shape[0])
