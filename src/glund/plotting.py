@@ -39,14 +39,22 @@ def plot_lund_with_ref(filename, reference, figname):
     r, c = 5, 5
     imgs = np.load(filename)
     sample = imgs[np.random.choice(imgs.shape[0], r*c, replace=False), :]
-    # now read in the pythia reference sample
-    reader=Jets(reference, imgs.shape[0])
-    events=reader.values() 
-    imgs_ref=np.zeros((len(events), imgs.shape[1], imgs.shape[2]))
-    li_gen=LundImage(npxlx = imgs.shape[1], npxly = imgs.shape[2]) 
-    for i, jet in enumerate(events): 
-        tree = JetTree(jet) 
-        imgs_ref[i]=li_gen(tree).reshape(imgs.shape[1], imgs.shape[2])
+
+    if reference == 'mnist':
+        # if mnist data, load the images from keras
+        from keras.datasets import mnist
+        (imgs_ref, _), (_, _) = mnist.load_data()
+        # Rescale -1 to 1
+        imgs_ref = imgs_ref.astype('float32') / 255
+    else:
+        # now read in the pythia reference sample
+        reader=Jets(reference, imgs.shape[0])
+        events=reader.values()
+        imgs_ref=np.zeros((len(events), imgs.shape[1], imgs.shape[2]))
+        li_gen=LundImage(npxlx = imgs.shape[1], npxly = imgs.shape[2])
+        for i, jet in enumerate(events):
+            tree = JetTree(jet)
+            imgs_ref[i]=li_gen(tree).reshape(imgs.shape[1], imgs.shape[2])
     sample_ref = imgs_ref[np.random.choice(imgs_ref.shape[0], r*c, replace=False), :]
     with PdfPages(figname) as pdf:
         fig, axs = plt.subplots(r, c)

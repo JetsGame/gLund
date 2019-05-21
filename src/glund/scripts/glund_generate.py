@@ -17,13 +17,21 @@ yval = [-3.0, 7.0]
 
 def plot_events_debug(gen_sample, preproc, datafile, setup, folder):
     # load in the data
-    reader=Jets(datafile, 5000)
-    events=reader.values()
-    img_data=np.zeros((len(events), setup['npx'], setup['npx'], 1))
-    li_gen=LundImage(npxlx = setup['npx']) 
-    for i, jet in enumerate(events): 
-        tree = JetTree(jet) 
-        img_data[i]=li_gen(tree).reshape(setup['npx'], setup['npx'], 1)
+    if datafile=='mnist':
+        # if mnist data, load the images from keras
+        from keras.datasets import mnist
+        (img_data, _), (_, _) = mnist.load_data()
+        # Rescale -1 to 1
+        img_data = img_data.astype('float32') / 255
+        img_data = np.expand_dims(img_data, axis=3)
+    else:
+        reader=Jets(datafile, 5000)
+        events=reader.values()
+        img_data=np.zeros((len(events), setup['npx'], setup['npx'], 1))
+        li_gen=LundImage(npxlx = setup['npx'])
+        for i, jet in enumerate(events):
+            tree = JetTree(jet)
+            img_data[i]=li_gen(tree).reshape(setup['npx'], setup['npx'], 1)
 
     # now reformat the training set as its average over n elements
     batch_averaged_img = np.zeros((len(img_data), setup['npx'], setup['npx'], 1))
@@ -73,9 +81,9 @@ def plot_events(gen_sample, preproc, datafile, setup, folder):
     reader=Jets(datafile, 5000)
     events=reader.values()
     img_data=np.zeros((len(events), setup['npx'], setup['npx'], 1))
-    li_gen=LundImage(npxlx = setup['npx']) 
-    for i, jet in enumerate(events): 
-        tree = JetTree(jet) 
+    li_gen=LundImage(npxlx = setup['npx'])
+    for i, jet in enumerate(events):
+        tree = JetTree(jet)
         img_data[i]=li_gen(tree).reshape(setup['npx'], setup['npx'], 1)
 
     # now reformat the training set as its average over n elements

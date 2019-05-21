@@ -10,18 +10,19 @@ import pickle
 #----------------------------------------------------------------------
 def build_preprocessor(setup):
     flat_input = setup['model'] in ('gan', 'vae', 'bgan', 'aae', 'lsgan')
+    scaler = setup['scaler'] if 'scaler' in setup else None
     if setup['pca']:
         if not flat_input:
             raise Exception('build_preprocessor: pca unavailable for this model')
         print('[+] Setting up PCA preprocessing pipeline')
-        preprocess = PreprocessorPCA(setup['pca_fraction'], whiten=False)
+        preprocess = PreprocessorPCA(setup['pca_fraction'], whiten=False, scaler=scaler)
     elif setup['zca']:
         print('[+] Setting up ZCA preprocessing pipeline')
-        preprocess = PreprocessorZCA(scaler=True, flatten=flat_input,
+        preprocess = PreprocessorZCA(scaler=scaler, flatten=flat_input,
                                      remove_zero=flat_input)
     else:
         print('[+] Setting up minimal preprocessing pipeline')
-        preprocess = Preprocessor(scaler=True, flatten=flat_input,
+        preprocess = Preprocessor(scaler=scaler, flatten=flat_input,
                                   remove_zero=flat_input)
     return preprocess
 
@@ -38,12 +39,18 @@ class Preprocessor:
     #----------------------------------------------------------------------
     def __init__(self, scaler, flatten, remove_zero, minmax=True):
         self.minmax=minmax
-        if minmax:
-            self.scaler = MinMaxScaler(feature_range=(-1,1)) if scaler else None
+        if scaler=='minmax':
+            print('[+] Using a MinMaxScaler in the preprocessor')
+            self.scaler = MinMaxScaler(feature_range=(-1,1))
+        elif scaler=='standard':
+            print('[+] Using a StandardScaler in the preprocessor')
+            self.scaler = StandardScaler()
+        elif scaler:
+            raise Exception('Preprocessor: invalid scaler option (minmax, standard or None)')
         else:
-            self.scaler = StandardScaler() if scaler else None
+            self.scaler = None
         if not flatten and remove_zero:
-            raise Exception('Preprocess: can not mask zero entries for unflattened inputs')
+            raise Exception('Preprocessor: can not mask zero entries for unflattened inputs')
         self.remove_zero = remove_zero
         self.flatten = flatten
         self.shape = None
@@ -119,17 +126,15 @@ class Preprocessor:
                         'length': self.length,
                         'flatten': self.flatten,
                         'remove_zero': self.remove_zero,
-                        'has_scaler': True if self.scaler else False,
                         'zero_mask': self.zero_mask}
-        if self.scaler:
-            if self.minmax:
-                preprocessor['scaler'] = {'scale': self.scaler.scale_,
-                                          'min': self.scaler.min_,
-                                          'data_min': self.scaler.data_min_,
-                                          'data_max': self.scaler.data_max_,
-                                          'data_range': self.scaler.data_range_}
-            else:
-                preprocessor['scaler'] = {'scale': self.scaler.scale_,
+        if type(self.scaler)==MinMaxScaler:
+            preprocessor['scaler_minmax'] = {'scale': self.scaler.scale_,
+                                             'min': self.scaler.min_,
+                                             'data_min': self.scaler.data_min_,
+                                             'data_max': self.scaler.data_max_,
+                                             'data_range': self.scaler.data_range_}
+        elif type(self.scaler)==StandardScaler:
+            preprocessor['scaler_std'] = {'scale': self.scaler.scale_,
                                           'mean': self.scaler.mean_,
                                           'var': self.scaler.var_,
                                           'n': self.scaler.n_samples_seen_}
@@ -145,22 +150,21 @@ class Preprocessor:
         self.flatten     = preprocessor['flatten']
         self.remove_zero = preprocessor['remove_zero']
         self.zero_mask   = preprocessor['zero_mask']
-        if self.minmax:
-            self.scaler = MinMaxScaler(feature_range=(-1,1)) if preprocessor['has_scaler'] else None
+        if 'scaler_minmax' in preprocessor:
+            self.scaler = MinMaxScaler(feature_range=(-1,1))
+            self.scaler.scale_ = preprocessor['scaler_minmax']['scale']
+            self.scaler.min_   = preprocessor['scaler_minmax']['min']
+            self.scaler.data_min_   = preprocessor['scaler_minmax']['data_min']
+            self.scaler.data_max_   = preprocessor['scaler_minmax']['data_max']
+            self.scaler.data_range_ = preprocessor['scaler_minmax']['data_range']
+        elif 'scaler_std' in preprocessor:
+            self.scaler = StandardScaler()
+            self.scaler.scale_ = preprocessor['scaler_std']['scale']
+            self.scaler.mean_  = preprocessor['scaler_std']['mean']
+            self.scaler.var_   = preprocessor['scaler_std']['var']
+            self.scaler.n_samples_seen_ = preprocessor['scaler_std']['n']
         else:
-            self.scaler = StandardScaler() if preprocessor['has_scaler'] else None
-        if self.scaler:
-            if self.minmax:
-                self.scaler.scale_ = preprocessor['scaler']['scale']
-                self.scaler.min_   = preprocessor['scaler']['min']
-                self.scaler.data_min_   = preprocessor['scaler']['data_min']
-                self.scaler.data_max_   = preprocessor['scaler']['data_max']
-                self.scaler.data_range_ = preprocessor['scaler']['data_range']
-            else:
-                self.scaler.scale_ = preprocessor['scaler']['scale']
-                self.scaler.mean_  = preprocessor['scaler']['mean']
-                self.scaler.var_   = preprocessor['scaler']['var']
-                self.scaler.n_samples_seen_ = preprocessor['scaler']['n']
+            self.scaler = None
         self._method_load(preprocessor)
 
     #----------------------------------------------------------------------
@@ -188,7 +192,7 @@ class PreprocessorPCA(Preprocessor):
     """Preprocessing pipeline using PCA."""
     
     #----------------------------------------------------------------------
-    def __init__(self, ncomp, whiten, scaler=True, flatten=True, remove_zero=True):
+    def __init__(self, ncomp, whiten, scaler='minmax', flatten=True, remove_zero=True):
         Preprocessor.__init__(self, scaler=scaler, flatten=flatten,
                               remove_zero=remove_zero)
         self.pca = PCA(ncomp, whiten=whiten)
@@ -247,7 +251,7 @@ class PreprocessorZCA(Preprocessor):
     """Preprocessing pipeline using ZCA."""
     
     #----------------------------------------------------------------------
-    def __init__(self, scaler=True, flatten=True, remove_zero=True):
+    def __init__(self, scaler='minmax', flatten=True, remove_zero=True):
         Preprocessor.__init__(self, scaler=scaler, flatten=flatten,
                               remove_zero=remove_zero)
 
@@ -287,7 +291,7 @@ class PreprocessorAE(Preprocessor):
     """Preprocessing pipeline using autoencoder."""
     
     #----------------------------------------------------------------------
-    def __init__(self, dim, epochs, scaler=True, flatten=True, remove_zero=True):
+    def __init__(self, dim, epochs, scaler='minmax', flatten=True, remove_zero=True):
         Preprocessor.__init__(self, scaler=scaler, flatten=flatten,
                               remove_zero=remove_zero)
         self.epochs = epochs
