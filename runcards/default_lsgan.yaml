@@ -49,3 +49,7 @@ nn_units_g: 256
 nn_alpha_d: 0.2
 nn_alpha_g: 0.2
 nn_momentum: 0.8
+nn_minibatch_discriminator: true
+nn_aux_ratio: 8
+nn_nb_kernels: 5
+nn_kernel_dim: 3
