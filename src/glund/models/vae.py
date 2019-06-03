@@ -38,7 +38,12 @@ class VAE(object):
 
     #----------------------------------------------------------------------
     def __init__(self, hps, length=28*28):
-        self.beta = hps['beta']
+        self.kl_annealing = hps['kl_annealing']
+        if self.kl_annealing:
+            self.annealing_rate = hps['kl_annealing_rate']
+            self.rate = K.variable(0.0,name='KL_Annealing')
+        else:
+            self.beta = hps['beta'] if 'beta' in hps else 1.0
         self.length = length
         self.latent_dim = hps['latdim']
         self.intermediate_dim = hps['nn_interm_dim']
@@ -90,7 +95,13 @@ class VAE(object):
         reconstruction_loss *= self.length
         kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
         kl_loss = K.sum(kl_loss, axis=-1)
-        kl_loss *= -0.5 * self.beta
+        if self.kl_annealing:
+            kl_loss *= -0.5 * self.rate
+            self.rate = K.tf.assign(self.rate,self.annealing_rate)
+            self.annealing_rate *=1.05
+            self.rate = K.tf.assign(self.rate,K.clip(self.rate,0.0,1.0))
+        else:
+            kl_loss *= -0.5 * self.beta
         vae_loss = K.mean(reconstruction_loss + kl_loss)
         vae.add_loss(vae_loss)
 

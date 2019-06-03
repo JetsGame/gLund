@@ -44,6 +44,7 @@ learning_rate: 0.0003
 opt_beta1: 0.9
 
 # VAE architecture parameters
-beta: 0.001
+beta: 1.0
 mse_loss: true
 nn_interm_dim: 512
+kl_annealing: false
