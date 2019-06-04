@@ -53,9 +53,7 @@ def loss_calc_raw(imgs_gen, imgs_ref):
      - ssim_loss: difference in ssim values between 1000 random pairs of
                   reference samples, and reference+generated samples
     """
-    img_loss  = np.linalg.norm(np.nan_to_num((np.average(imgs_gen,axis=0)
-                                              -np.average(imgs_ref,axis=0))
-                                             /np.average(imgs_ref,axis=0)))
+    img_loss  = np.linalg.norm(np.average(imgs_gen,axis=0)-np.average(imgs_ref,axis=0))
     nv=5000
     ssim_in  = np.zeros(nv)
     ssim_out = np.zeros(nv)
@@ -63,19 +61,9 @@ def loss_calc_raw(imgs_gen, imgs_ref):
         p=np.random.choice(min(len(imgs_gen),len(imgs_ref)),(2,1),replace=False)[:,0]
         ssim_in[i]  = ssim(imgs_ref[p[0]], imgs_ref[p[1]])
         ssim_out[i] = ssim(imgs_ref[p[0]], imgs_gen[p[1]])
-    ssim_loss = abs(np.average(ssim_in) - np.average(ssim_out))
-    
-    gen_sum_all = np.zeros(len(imgs_gen))
-    ref_sum_all = np.zeros(len(imgs_ref))
-    for i in range(len(imgs_gen)):
-        gen_sum_all[i]=np.sum(imgs_gen[i])
-        ref_sum_all[i]=np.sum(imgs_ref[i])
-    act_avg_loss = abs(np.average(gen_sum_all) - np.average(ref_sum_all)) /  50.0
-    act_var_loss = abs(np.var(gen_sum_all)     -     np.var(ref_sum_all)) / 200.0
-    loss=img_loss + ssim_loss + act_avg_loss + act_var_loss
-    print('Raw loss: %f\n(img_norm: %f, ssim_loss: %f, act_avg: %f, act_var: %f)'
-          % (loss,img_loss,ssim_loss,act_avg_loss,act_var_loss))
-    return loss
+    ssim_loss = 5* abs(np.average(ssim_in) - np.average(ssim_out))
+    print('Raw loss: %f\t(%f, %f)' % (img_loss+ssim_loss,img_loss,ssim_loss))
+    return img_loss + ssim_loss
 
 #----------------------------------------------------------------------
 def zca_whiten(X):
