@@ -41,6 +41,7 @@ class VAE(object):
         self.kl_annealing = hps['kl_annealing']
         if self.kl_annealing:
             self.annealing_rate = hps['kl_annealing_rate']
+            self.annealing_factor = hps['kl_annealing_factor']
             self.rate = K.variable(0.0,name='KL_Annealing')
         else:
             self.beta = hps['beta'] if 'beta' in hps else 1.0
@@ -98,7 +99,7 @@ class VAE(object):
         if self.kl_annealing:
             kl_loss *= -0.5 * self.rate
             self.rate = K.tf.assign(self.rate,self.annealing_rate)
-            self.annealing_rate *=1.05
+            self.annealing_rate *=self.annealing_factor
             self.rate = K.tf.assign(self.rate,K.clip(self.rate,0.0,1.0))
         else:
             kl_loss *= -0.5 * self.beta

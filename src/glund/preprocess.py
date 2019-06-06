@@ -11,19 +11,21 @@ import pickle
 def build_preprocessor(setup):
     flat_input = setup['model'] in ('gan', 'vae', 'bgan', 'aae', 'lsgan')
     scaler = setup['scaler'] if 'scaler' in setup else None
+    pixel_by_pixel = setup['scaler_pxl_by_pxl'] if 'scaler_pxl_by_pxl' in setup else None
     if setup['pca']:
         if not flat_input:
             raise Exception('build_preprocessor: pca unavailable for this model')
         print('[+] Setting up PCA preprocessing pipeline')
-        preprocess = PreprocessorPCA(setup['pca_fraction'], whiten=False, scaler=scaler)
+        preprocess = PreprocessorPCA(setup['pca_fraction'], whiten=False,
+                                     scaler=scaler, pxl_by_pxl=pixel_by_pixel)
     elif setup['zca']:
         print('[+] Setting up ZCA preprocessing pipeline')
         preprocess = PreprocessorZCA(scaler=scaler, flatten=flat_input,
-                                     remove_zero=flat_input)
+                                     remove_zero=flat_input, pxl_by_pxl=pixel_by_pixel)
     else:
         print('[+] Setting up minimal preprocessing pipeline')
         preprocess = Preprocessor(scaler=scaler, flatten=flat_input,
-                                  remove_zero=flat_input)
+                                  remove_zero=flat_input, pxl_by_pxl=pixel_by_pixel)
     return preprocess
 
 #----------------------------------------------------------------------
@@ -37,7 +39,7 @@ class Preprocessor:
     """Preprocessing pipeline"""
     
     #----------------------------------------------------------------------
-    def __init__(self, scaler, flatten, remove_zero):
+    def __init__(self, scaler, flatten, remove_zero, pxl_by_pxl):
         if scaler=='minmax':
             print('[+] Using a MinMaxScaler in the preprocessor')
             self.scaler = MinMaxScaler(feature_range=(-1,1))
@@ -52,6 +54,7 @@ class Preprocessor:
             raise Exception('Preprocessor: can not mask zero entries for unflattened inputs')
         self.remove_zero = remove_zero
         self.flatten = flatten
+        self.pxl_by_pxl = pxl_by_pxl
         self.shape = None
         self.length = None
 
@@ -64,7 +67,13 @@ class Preprocessor:
         if self.remove_zero:
             data = data[:,self.zero_mask]
         if self.scaler:
-            data = self.scaler.fit_transform(data)
+            if self.pxl_by_pxl:
+                data = self.scaler.fit_transform(data)
+            else:
+                avg_data = np.average(data,axis=1)
+                self.scaler.fit(avg_data.reshape(-1,1))
+                for i in range(len(data[0])):
+                    data[:,i] = self.scaler.transform(data[:,i].reshape(-1,1))[:,0]
         self.length = data.shape[1]
         self._method_fit(data)
 
@@ -75,7 +84,11 @@ class Preprocessor:
         if self.remove_zero:
             data = data[:,self.zero_mask]
         if self.scaler:
-            data = self.scaler.transform(data)
+            if self.pxl_by_pxl:
+                data = self.scaler.transform(data)
+            else:
+                for i in range(len(data[0])):
+                    data[:,i] = self.scaler.transform(data[:,i].reshape(-1,1))[:,0]
         data = self._method_transform(data)
         if not self.flatten:
             return data.reshape((len(data),)+self.shape)
@@ -88,7 +101,11 @@ class Preprocessor:
             data = data.reshape(-1, self.shape[0]*self.shape[1])
         data = self._method_inverse(data)
         if self.scaler:
-            data = self.scaler.inverse_transform(data)
+            if self.pxl_by_pxl:
+                data = self.scaler.inverse_transform(data)
+            else:
+                for i in range(len(data[0])):
+                    data[:,i] = self.scaler.inverse_transform(data[:,i].reshape(-1,1))[:,0]
         if self.remove_zero:
             result = np.zeros((len(data),self.shape[0]*self.shape[1]))
             result[:, self.zero_mask] = data[:,:]
@@ -191,9 +208,10 @@ class PreprocessorPCA(Preprocessor):
     """Preprocessing pipeline using PCA."""
     
     #----------------------------------------------------------------------
-    def __init__(self, ncomp, whiten, scaler='minmax', flatten=True, remove_zero=True):
+    def __init__(self, ncomp, whiten, scaler='minmax', flatten=True,
+                 remove_zero=True, pxl_by_pxl=False):
         Preprocessor.__init__(self, scaler=scaler, flatten=flatten,
-                              remove_zero=remove_zero)
+                              remove_zero=remove_zero, pxl_by_pxl=pxl_by_pxl)
         self.pca = PCA(ncomp, whiten=whiten)
 
     #----------------------------------------------------------------------
@@ -250,9 +268,10 @@ class PreprocessorZCA(Preprocessor):
     """Preprocessing pipeline using ZCA."""
     
     #----------------------------------------------------------------------
-    def __init__(self, scaler='minmax', flatten=True, remove_zero=True):
+    def __init__(self, scaler='minmax', flatten=True,
+                 remove_zero=True, pxl_by_pxl=False):
         Preprocessor.__init__(self, scaler=scaler, flatten=flatten,
-                              remove_zero=remove_zero)
+                              remove_zero=remove_zero, pxl_by_pxl=pxl_by_pxl)
 
     #----------------------------------------------------------------------
     def _method_fit(self, data):
@@ -290,9 +309,10 @@ class PreprocessorAE(Preprocessor):
     """Preprocessing pipeline using autoencoder."""
     
     #----------------------------------------------------------------------
-    def __init__(self, dim, epochs, scaler='minmax', flatten=True, remove_zero=True):
+    def __init__(self, dim, epochs, scaler='minmax', flatten=True,
+                 remove_zero=True, pxl_by_pxl=False):
         Preprocessor.__init__(self, scaler=scaler, flatten=flatten,
-                              remove_zero=remove_zero)
+                              remove_zero=remove_zero, pxl_by_pxl=pxl_by_pxl)
         self.epochs = epochs
         self.dim = dim
 
