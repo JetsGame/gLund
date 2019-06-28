@@ -38,8 +38,8 @@ def plot_slice_kt(filedic, imgref, figname, npx=24):
     # now the ratio
     divider = make_axes_locatable(ax)
     axratio = divider.append_axes("bottom",1.6, pad=0.0)
-    axratio.axis([1.0, 0.01, 0.8, 1.2])
-    plt.yticks(ticks=[0.8, 0.9, 1, 1.1])
+    axratio.axis([1.0, 0.01, 0.6, 1.4])
+    plt.yticks(ticks=[0.6, 0.8, 1, 1.2])
     axratio.set_xscale('log')
     axratio.set_xlabel('$\\Delta_{ab}$')
     axratio.set_ylabel('ratio to Pythia 8')
@@ -86,8 +86,8 @@ def plot_slice_delta(filedic, imgref, figname, npx=24):
     # no the ratio
     divider = make_axes_locatable(ax)
     axratio = divider.append_axes("bottom",1.6, pad=0.0)
-    axratio.axis([0.1, 100, 0.8, 1.2])
-    plt.yticks(ticks=[0.8, 0.9, 1, 1.1])
+    axratio.axis([0.1, 100, 0.6, 1.4])
+    plt.yticks(ticks=[0.6, 0.8, 1, 1.2])
     axratio.set_xscale('log')
     axratio.set_xlabel('$k_t$ [GeV]')
     axratio.set_ylabel('ratio to Pythia 8')
