@@ -7,6 +7,31 @@ import numpy as np
 import argparse,math
 
 #----------------------------------------------------------------------
+def plot_activation(filedic, imgs_ref, figname):
+    """Plot a slice in kt of the lund image for different models and a reference sample."""
+    act = {}
+    for lab in filedic.keys():
+        imgs = np.load(filedic[lab])
+        act[lab] = []
+        for i in range(len(imgs)):
+            act[lab].append(np.sum(imgs[i]))
+    act_ref = []
+    for i in range(len(imgs_ref)):
+        act_ref.append(np.sum(imgs_ref[i]))
+    fig, ax = plt.subplots(figsize=(5,3.5))
+    bins = np.arange(0, 101, 1)
+    for lab in act.keys():
+        plt.hist(act[lab], bins=bins, histtype='step', density=True, label=lab)
+    plt.hist(act_ref, bins=bins, histtype='step', density=True, label='Pythia 8')
+    ax.set_xlim((0,30))
+    ax.set_ylim((0.0,0.14))
+    ax.set_xlabel('# activated pixels')
+    plt.legend()
+    ax.grid(linestyle=':')
+    plt.savefig(figname, bbox_inches='tight')
+    plt.close()
+
+#----------------------------------------------------------------------
 def plot_slice_kt(filedic, imgref, figname, npx=24):
     """Plot a slice in kt of the lund image for different models and a reference sample."""
     img = {}
@@ -163,12 +188,12 @@ def main(args):
     if args.data:
         reader=Jets(args.data, args.nev)
         events=reader.values()
-        imgref=np.zeros((len(events), args.npx, args.npx))
+        imgs_ref=np.zeros((len(events), args.npx, args.npx))
         li_gen=LundImage(npxlx = args.npx)
         for i, jet in enumerate(events): 
             tree = JetTree(jet) 
-            imgref[i]=li_gen(tree)
-        imgref=np.average(imgref,axis=0)
+            imgs_ref[i]=li_gen(tree)
+        imgref=np.average(imgs_ref,axis=0)
     else:
         imgref=None
     folder = args.output.strip('/')+'/' if args.output else ''
@@ -181,6 +206,7 @@ def main(args):
 
     print('Plotting slices')
     if imgref is not None:
+        plot_activation(filedic, imgs_ref, folder+'activation.pdf')
         plot_slice_delta(filedic, imgref, folder+'delta_slice.pdf', args.npx)
         plot_slice_kt(filedic, imgref, folder+'kt_slice.pdf', args.npx)
     else:
