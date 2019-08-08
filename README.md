@@ -66,9 +66,9 @@ glund --output <output_folder>  <runcard.yaml>
 ```
 This will create a folder containing the result of the fit.
 
-To create diagnostic plots from an existing model, use
+To create new samples from an existing model, as well as some diagnostic plots, use
 ```
-glund_plot_samples --data output_folder/generated_images.npy  --reference ../data/valid/valid_QCD_500GeV.json.gz
+glund_generate --save --ngen <number_to_generate> --output <result_file.npy> <model>
 ```
 
 ## References
