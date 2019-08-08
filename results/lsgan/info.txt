@@ -1,0 +1,4 @@
+# LSGAN with length=349, latent_dim=500
+# created on 2019-06-23 14:01:08.814633 with the command:
+# /projects/nnpdf/miniconda3/bin/glund runcards/best-model.yaml -o best-model --force --plot-samples
+# final loss:	0.046580	raw loss:	0.813948

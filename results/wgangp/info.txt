@@ -1,0 +1,4 @@
+# WGAN-GP with width=24, height=24, latent_dim=800
+# created on 2019-06-28 11:18:32.805373 with the command:
+# /users/dreyer/local/miniconda3/envs/tensorflow_gpuenv/bin/glund --output wgangp-final wgangp-card.yaml --force --plot-samples
+# final loss:	0.067329	raw loss:	49002.518393

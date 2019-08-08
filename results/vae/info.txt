@@ -1,0 +1,4 @@
+# VAE with length=349, latent_dim=1000, mse_loss=True
+# created on 2019-06-27 16:15:54.897472 with the command:
+# /users/dreyer/local/miniconda3/envs/tensorflow_gpuenv/bin/glund --output test500 input-model.yaml --force --plot-samples
+# final loss:	0.216821	raw loss:	31.076315

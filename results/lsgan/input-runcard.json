@@ -1,0 +1,62 @@
+# data set on which to train, available options:
+# path to json contains jet events
+# mnist: uses the MNIST data set for testing
+data: ../data/valid/valid_QCD_500GeV_delphes.json.gz
+
+# Number of events
+nev: -1 # -1 = all data
+
+# Select model, available options are:
+# gan, dcgan, wgan, wgangp, vae, aae, bgan, lsgan
+model: lsgan
+
+# Number of epochs
+epochs: 5000
+
+# Batch size
+batch_size: 32
+
+# Monitor the unprocessed output loss
+monitor_final_loss: false
+
+# Number of generated events
+ngen: 50000
+
+# Number of latent dimensions
+latdim: 500
+
+# Number of pixels
+npx: 24
+
+# scaler for preprocessing
+scaler: minmax
+scaler_pxl_by_pxl: false
+
+# Perform PCA preprocessing
+pca: false
+
+# Perform ZCA preprocessing
+zca: true
+
+# Number of pixel average
+navg: 32
+deterministic: false
+
+# Optimizer parameters
+# options are: Adam, RMSprop, Adagrad, SGD
+optimizer: Adagrad
+learning_rate: 6.448256540173037e-05
+opt_decay: 8.0e-9
+
+# LSGAN architecture parameters
+nn_units_d: 384
+nn_units_g: 512
+nn_alpha_d: 0.12927016111252979
+nn_alpha_g: 0.4772535432106234
+nn_momentum: 0.9995446887246834
+nn_aux_ratio: 12
+nn_kernel_dim: 1
+nn_nb_kernels: 2
+nn_minibatch_discriminator: 1
+
+
