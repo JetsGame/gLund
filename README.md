@@ -41,6 +41,7 @@ gLund requires the following packages:
 - gzip
 - argparse
 - scikit-image
+- scikit-learn
 - hyperopt (optional)
 
 ## Pre-trained models
