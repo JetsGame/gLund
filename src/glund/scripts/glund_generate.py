@@ -6,14 +6,12 @@ from glund.read_data import Jets
 from glund.JetTree import JetTree, LundImage
 from glund.preprocess import Averager
 from glund.model import load_model_and_preprocessor
+from glund.plotting import xval,yval
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import cm
 import argparse, os, yaml
-
-xval = [0.0, 7.0]
-yval = [-3.0, 7.0]
 
 def plot_events_debug(gen_sample, preproc, datafile, setup, folder):
     # load in the data
@@ -76,7 +74,7 @@ def plot_events_debug(gen_sample, preproc, datafile, setup, folder):
         j+=1
     plt.savefig(f'{folder}/plot_debug.pdf')
 
-def plot_events(gen_sample, preproc, datafile, setup, folder):
+def plot_events(gen_sample, avg, preproc, datafile, setup, folder):
     # load in the data
     reader=Jets(datafile, 5000)
     events=reader.values()
@@ -87,74 +85,80 @@ def plot_events(gen_sample, preproc, datafile, setup, folder):
         img_data[i]=li_gen(tree).reshape(setup['npx'], setup['npx'], 1)
 
     # now reformat the training set as its average over n elements
-    avg = Averager(setup['navg'])
     img_input = avg.transform(img_data)
 
     # set up the preprocessed input
-    img_unmask = preproc.unmask(preproc.transform(img_input), invert_method=False)
+    img_unmask = preproc.unmask(preproc.transform(img_input))
     # set up the generated images
-    gen_unmask = preproc.unmask(gen_sample, invert_method=False)
+    gen_unmask = preproc.unmask(gen_sample)
     gen_processed  = preproc.inverse(gen_sample)
     gen_final = avg.inverse(gen_processed)
     with PdfPages(f'{folder}/plot_events.pdf') as pdf:
-        fig=plt.figure(figsize=(5,6))
+        cbartics   = [-1.0, -0.5, 0.0, 0.5, 1.0]
+        fig=plt.figure(figsize=(4.5,4))
         plt.title('Raw input')
         plt.imshow(img_data[0].reshape(setup['npx'],setup['npx']).transpose(),
                    vmin=-1.0, vmax=1.0, cmap=cm.seismic, origin='lower',
                    aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+        plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
-        pdf.savefig()
+        pdf.savefig(bbox_inches='tight')
         plt.close()
         
-        fig=plt.figure(figsize=(5,6))
+        fig=plt.figure(figsize=(4.5,4))
         plt.title('Averaged input')
         plt.imshow(img_input[0].reshape(setup['npx'],setup['npx']).transpose(),
                    vmin=-1.0, vmax=1.0, cmap=cm.seismic, origin='lower',
                    aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+        plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
-        pdf.savefig()
+        pdf.savefig(bbox_inches='tight')
         plt.close()
         
-        fig=plt.figure(figsize=(5,6))
+        fig=plt.figure(figsize=(4.5,4))
         plt.title('Preprocessed input')
         plt.imshow(img_unmask[0].reshape(setup['npx'],setup['npx']).transpose(),
                    vmin=-1.0, vmax=1.0, cmap=cm.seismic, origin='lower',
                    aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+        plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
-        pdf.savefig()
+        pdf.savefig(bbox_inches='tight')
         plt.close()
 
-        fig=plt.figure(figsize=(5,6))
-        plt.title('Raw generated sample')
+        fig=plt.figure(figsize=(4.5,4))
+        plt.title('Raw generated output')
         plt.imshow(gen_unmask[0].reshape(setup['npx'],setup['npx']).transpose(),
                    vmin=-1.0, vmax=1.0, cmap=cm.seismic, origin='lower',
                    aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+        plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
-        pdf.savefig()
+        pdf.savefig(bbox_inches='tight')
         plt.close()
 
-        fig=plt.figure(figsize=(5,6))
+        fig=plt.figure(figsize=(4.5,4))
         plt.title('Processed generated sample')
         plt.imshow(gen_processed[0].reshape(setup['npx'],setup['npx']).transpose(),
                    vmin=-1.0, vmax=1.0, cmap=cm.seismic, origin='lower',
                    aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+        plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
-        pdf.savefig()
+        pdf.savefig(bbox_inches='tight')
         plt.close()
 
-        fig=plt.figure(figsize=(5,6))
+        fig=plt.figure(figsize=(4.5,4))
         plt.title('Generated sample')
         plt.imshow(gen_final[0].reshape(setup['npx'],setup['npx']).transpose(),
                    vmin=-1.0, vmax=1.0, cmap=cm.seismic, origin='lower',
                    aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+        plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
-        pdf.savefig()
+        pdf.savefig(bbox_inches='tight')
         plt.close()
 
 #----------------------------------------------------------------------
@@ -167,6 +171,8 @@ def main():
     parser.add_argument('--save', action='store_true', help='Save generated sample')
     parser.add_argument('--debugplots', action='store_true', help='Plot diagnostics')
     parser.add_argument('--plot', action='store_true', help='Plot diagnostics')
+    parser.add_argument('--output', type=str, default=None, 
+                        help='Where to save the generated images')
     parser.add_argument('--data', type=str, default=None, help='The reference data file')
     args = parser.parse_args()
     
@@ -183,11 +189,12 @@ def main():
     model, preproc = load_model_and_preprocessor(folder, setup)
 
     gen_sample = model.generate(args.ngen)
+    avg = Averager(setup['navg'])
 
     data = args.data if args.data else setup['data']
     if args.plot:
-        plot_events(gen_sample, preproc, data, setup, folder)
+        plot_events(gen_sample, avg, preproc, data, setup, folder)
     if args.debugplots:
         plot_events_debug(gen_sample, preproc, data, setup, folder)
     if args.save:
-        np.save('%s/generated_images' % folder, gen_sample)
+        np.save('%s/generated_images' % folder if not args.output else args.output, gen_sample)

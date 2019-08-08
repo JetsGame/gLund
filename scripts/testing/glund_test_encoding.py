@@ -11,32 +11,7 @@ import numpy as np
 import argparse, os, shutil, sys, datetime
 
 #----------------------------------------------------------------------
-def main():
-    # read in the arguments
-    parser = argparse.ArgumentParser(description='Train a generative model.')
-    parser.add_argument('--mnist',  action='store_true',
-                        help='Train on MNIST data (for testing purposes).')
-    parser.add_argument('--epochs', type=int, default=50, help='Number of epochs.')
-    parser.add_argument('--nev', '-n', type=int, default=-1,
-                        help='Number of training events.')
-    parser.add_argument('--dim', type=int, default=100, dest='latdim',
-                        help='Number of latent dimensions.')
-    parser.add_argument('--npx', type=int, default=28, help='Number of pixels.')
-    parser.add_argument('--data', type=str, required=True,
-                        help='Data set on which to train.')
-    parser.add_argument('--keep-zeros', action='store_true', dest='keepzero',
-                        help='Convert output values to nearest integer.')
-    parser.add_argument('--no-scaler', action='store_true', dest='noscaler',
-                        help='Convert output values to nearest integer.')
-    parser.add_argument('--no-flat', action='store_true', dest='noflat',
-                        help='Convert output values to nearest integer.')
-    parser.add_argument('--pca', action='store',const=0.95, default=None,
-                        nargs='?', type=float, help='Perform PCA.')
-    parser.add_argument('--zca', action='store_true', help='Perform ZCA.')
-    parser.add_argument('--autoencoder', action='store',const=200, default=None,
-                        nargs='?', type=int, help='Perform autoencoding')
-    args = parser.parse_args()
-    
+def main(args):
     rem0=not args.keepzero
     scaler=not args.noscaler
     flatten=not args.noflat
@@ -117,3 +92,32 @@ def main():
             transform=plt.gcf().transFigure, clip_on=False)
     plt.show()
     plt.close()
+
+#----------------------------------------------------------------------
+if __name__ == "__main__":
+    # read in the arguments
+    parser = argparse.ArgumentParser(description='Train a generative model.')
+    parser.add_argument('--mnist',  action='store_true',
+                        help='Train on MNIST data (for testing purposes).')
+    parser.add_argument('--epochs', type=int, default=50, help='Number of epochs.')
+    parser.add_argument('--nev', '-n', type=int, default=-1,
+                        help='Number of training events.')
+    parser.add_argument('--dim', type=int, default=100, dest='latdim',
+                        help='Number of latent dimensions.')
+    parser.add_argument('--npx', type=int, default=28, help='Number of pixels.')
+    parser.add_argument('--data', type=str, required=True,
+                        help='Data set on which to train.')
+    parser.add_argument('--keep-zeros', action='store_true', dest='keepzero',
+                        help='Convert output values to nearest integer.')
+    parser.add_argument('--no-scaler', action='store_true', dest='noscaler',
+                        help='Convert output values to nearest integer.')
+    parser.add_argument('--no-flat', action='store_true', dest='noflat',
+                        help='Convert output values to nearest integer.')
+    parser.add_argument('--pca', action='store',const=0.95, default=None,
+                        nargs='?', type=float, help='Perform PCA.')
+    parser.add_argument('--zca', action='store_true', help='Perform ZCA.')
+    parser.add_argument('--autoencoder', action='store',const=200, default=None,
+                        nargs='?', type=int, help='Perform autoencoding')
+    args = parser.parse_args()
+    
+    main(args)
