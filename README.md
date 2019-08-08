@@ -40,6 +40,7 @@ gLund requires the following packages:
 - json
 - gzip
 - argparse
+- scikit-image
 - hyperopt (optional)
 
 ## Pre-trained models
