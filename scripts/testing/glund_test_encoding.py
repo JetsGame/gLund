@@ -29,7 +29,7 @@ def main(args):
         reader=Jets(args.data, args.nev)
         events=reader.values() 
         img_train=np.zeros((len(events), args.npx, args.npx, 1))
-        li_gen=LundImage(npxlx = args.npx) 
+        li_gen=LundImage(npxlx = args.npx, y_axis=args.yaxis) 
         for i, jet in enumerate(events): 
             tree = JetTree(jet) 
             img_train[i]=li_gen(tree).reshape(args.npx, args.npx, 1)
@@ -118,6 +118,7 @@ if __name__ == "__main__":
     parser.add_argument('--zca', action='store_true', help='Perform ZCA.')
     parser.add_argument('--autoencoder', action='store',const=200, default=None,
                         nargs='?', type=int, help='Perform autoencoding')
+    parser.add_argument('--y-axis', type=str, dest='yaxis', help='Type of y axis')
     args = parser.parse_args()
     
     main(args)

@@ -42,7 +42,7 @@ def run_hyperparameter_scan(search_space, max_evals, cluster, folder):
 def load_yaml(runcard_file):
     """Loads yaml runcard"""
     with open(runcard_file, 'r') as stream:
-        runcard = yaml.load(stream)
+        runcard = yaml.load(stream, Loader=yaml.FullLoader)
     for key, value in runcard.items():
         if 'hp.' in str(value):
             runcard[key] = eval(value)
@@ -77,7 +77,8 @@ def build_and_train_model(setup):
         reader=Jets(setup['data'], setup['nev'])
         events=reader.values()
         img_data=np.zeros((len(events), setup['npx'], setup['npx'], 1))
-        li_gen=LundImage(npxlx = setup['npx'])
+        li_gen=LundImage(npxlx = setup['npx'], 
+                         y_axis = setup['y_axis'] if 'y_axis' in setup else 'kt')
         for i, jet in enumerate(events): 
             tree = JetTree(jet) 
             img_data[i]=li_gen(tree).reshape(setup['npx'], setup['npx'], 1)
@@ -197,4 +198,5 @@ def main():
     np.save(genfn, gen_sample)
 
     if args.plot_samples:
-        plot_lund_with_ref(f'{genfn}.npy', setup['data'], f'{genfn}.pdf')
+        plot_lund_with_ref(f'{genfn}.npy', setup['data'], f'{genfn}.pdf',
+                           y_axis = setup['y_axis'] if 'y_axis' in setup else 'kt')

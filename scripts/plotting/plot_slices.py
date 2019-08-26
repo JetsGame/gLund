@@ -37,8 +37,8 @@ def plot_slice_kt(filedic, imgref, figname, npx=24):
     img = {}
     for lab in filedic.keys():
         img[lab] = np.average(np.load(filedic[lab]), axis=0)
-    yvals=np.linspace(-3, 7, npx+1)
-    xvals=np.linspace(0,  7, npx+1)
+    yvals=np.linspace(LundImage.yval[0], LundImage.yval[1], npx+1)
+    xvals=np.linspace(LundImage.xval[0], LundImage.xval[1], npx+1)
 
     # get kt slice. This is tuned for 24 pixel images
     kt_min = math.exp(yvals[12])
@@ -84,8 +84,8 @@ def plot_slice_delta(filedic, imgref, figname, npx=24):
     img = {}
     for lab in filedic.keys():
         img[lab] = np.average(np.load(filedic[lab]), axis=0)
-    xvals=np.linspace(0,  7, npx+1)
-    yvals=np.linspace(-3, 7, npx+1)
+    xvals=np.linspace(LundImage.xval[0], LundImage.xval[1], npx+1)
+    yvals=np.linspace(LundImage.yval[0], LundImage.yval[1], npx+1)
 
     # get delta R slice. This is tuned for 24 pixel images
     delta_max = math.exp(-xvals[4])
@@ -131,8 +131,8 @@ def plot_slice_kt_noratio(filedic, figname, npx=24):
     img = {}
     for lab in filedic.keys():
         img[lab] = np.average(np.load(filedic[lab]), axis=0)
-    yvals=np.linspace(-3, 7, npx+1)
-    xvals=np.linspace(0,  7, npx+1)
+    xvals=np.linspace(LundImage.xval[0], LundImage.xval[1], npx+1)
+    yvals=np.linspace(LundImage.yval[0], LundImage.yval[1], npx+1)
 
     # get kt slice. This is tuned for 24 pixel images
     kt_min = math.exp(yvals[12])
@@ -160,8 +160,8 @@ def plot_slice_delta_noratio(filedic, figname, npx=24):
     img = {}
     for lab in filedic.keys():
         img[lab] = np.average(np.load(filedic[lab]), axis=0)
-    xvals=np.linspace(0,  7, npx+1)
-    yvals=np.linspace(-3, 7, npx+1)
+    xvals=np.linspace(LundImage.xval[0], LundImage.xval[1], npx+1)
+    yvals=np.linspace(LundImage.yval[0], LundImage.yval[1], npx+1)
     
     # get delta R slice. This is tuned for 24 pixel images
     delta_max = math.exp(-xvals[4])
@@ -189,7 +189,7 @@ def main(args):
         reader=Jets(args.data, args.nev)
         events=reader.values()
         imgs_ref=np.zeros((len(events), args.npx, args.npx))
-        li_gen=LundImage(npxlx = args.npx)
+        li_gen=LundImage(npxlx = args.npx, y_axis=args.yaxis)
         for i, jet in enumerate(events): 
             tree = JetTree(jet) 
             imgs_ref[i]=li_gen(tree)
@@ -223,5 +223,6 @@ if __name__ == "__main__":
     parser.add_argument('--nev',type=int, default=-1, help='Pixel number')
     parser.add_argument('label_data_pairs',  type=str, nargs='+',
                         help='List of label and generated data files.')
+    parser.add_argument('--y-axis', type=str, dest='yaxis', help='Type of y axis')
     args = parser.parse_args()
     main(args)

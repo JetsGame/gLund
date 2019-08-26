@@ -18,8 +18,8 @@ class LundCoordinates:
         self.lnKt    = math.log(j2.pt()*delta)
         self.lnDelta = math.log(delta)
         # self.lnm     = 0.5*math.log(abs((j1 + j2).m2()))
-        # self.lnz     = math.log(z)
-        # self.lnKappa = math.log(z * delta)
+        self.lnz     = math.log(z)
+        self.lnKappa = math.log(z * delta)
         # self.psi     = math.atan((j1.rap() - j2.rap())/(j1.phi() - j2.phi()))
 
 
@@ -63,9 +63,15 @@ class JetTree:
 class LundImage:
     """Class to create Lund images from a jet tree."""
 
+    xval = [0.0, 7.0]
+    yval = [-3.0, 7.0]
+    
+    __yval_kt = [-3.0, 7.0]
+    __yval_z = [-8.0, 0.0]
+
     #----------------------------------------------------------------------
-    def __init__(self, xval = [0.0, 7.0], yval = [-3.0, 7.0],
-                 npxlx = 50, npxly = None, norm_to_one = True):
+    def __init__(self, xval = None, yval = None, npxlx = 50, npxly = None,
+                 norm_to_one = True, y_axis = 'kt'):
         """Set up the LundImage instance."""
         # set up the pixel numbers
         self.npxlx = npxlx
@@ -76,10 +82,24 @@ class LundImage:
         # set a flag which determines if pixels are normalized to one or not
         self.norm_to_one = norm_to_one
         # set up the bin edge and width
-        self.xmin = xval[0]
-        self.ymin = yval[0]
-        self.x_pxl_wdth = (xval[1] - xval[0])/self.npxlx
-        self.y_pxl_wdth = (yval[1] - yval[0])/self.npxly
+        LundImage.change_ybox(y_axis)
+        xv = xval if xval else LundImage.xval
+        yv = yval if yval else LundImage.yval
+        self.xmin = xv[0]
+        self.ymin = yv[0]
+        self.x_pxl_wdth = (xv[1] - xv[0])/self.npxlx
+        self.y_pxl_wdth = (yv[1] - yv[0])/self.npxly
+        self.y_axis = y_axis
+
+    #----------------------------------------------------------------------
+    @staticmethod
+    def change_ybox(y_axis):
+        if y_axis=='kt':
+            LundImage.yval = LundImage.__yval_kt
+        elif y_axis=='z' or y_axis=='kappa':
+            LundImage.yval = LundImage.__yval_z
+        else:
+            raise ValueError("LundImage: invalid y_axis.")
 
     #----------------------------------------------------------------------
     def __call__(self, tree):
@@ -93,7 +113,14 @@ class LundImage:
         """Fill the res array recursively with the tree declusterings of the hard branch."""
         if(tree and tree.lundCoord):
             x = -tree.lundCoord.lnDelta
-            y =  tree.lundCoord.lnKt
+            if self.y_axis=='kt':
+                y = tree.lundCoord.lnKt
+            if self.y_axis=='z':
+                y = tree.lundCoord.lnz
+            elif self.y_axis=='kappa':
+                y = tree.lundCoord.lnKappa
+            else:
+                raise ValueError("LundImage: invalid y_axis.")
             xind = math.ceil((x - self.xmin)/self.x_pxl_wdth - 1.0)
             yind = math.ceil((y - self.ymin)/self.y_pxl_wdth - 1.0)
             if (xind < self.npxlx and yind < self.npxly and min(xind,yind) >= 0):
@@ -101,4 +128,36 @@ class LundImage:
                     res[xind,yind] += 1
             self.fill(tree.harder, res)
             #self.fill(tree.softer, res)
+
+
+#======================================================================
+class SoftDropMult:
+    """Class to compute the soft drop multiplicity of a jet."""
+
+    #----------------------------------------------------------------------
+    def __init__(self, zcut = 0.007, beta=-1, thetacut=0, R0=1):
+        """Set up the LundImage instance."""
+        self.zcut=zcut
+        self.beta=beta
+        self.thetacut=thetacut
+        self.R0=R0
+
+    #----------------------------------------------------------------------
+    def __call__(self, tree):
+        """Process a jet tree and return the soft drop multiplicity."""
+        nsd = 0
+        return self.fill(tree, nsd)
+
+    #----------------------------------------------------------------------
+    def fill(self, tree, nsd):
+        """Fill the res array recursively with the tree declusterings of the hard branch."""
+        if(tree and tree.lundCoord):
+            delta = math.exp(tree.lundCoord.lnDelta)
+            #z = math.exp(tree.lundCoord.lnz)
+            z = np.exp(tree.lundCoord.lnKappa)/delta
+            if (delta > self.thetacut and z > self.zcut * ((delta/self.R0)**self.beta)):
+                return self.fill(tree.harder, nsd+1)
+            else:
+                return self.fill(tree.harder, nsd)
+        return nsd
 

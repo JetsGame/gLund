@@ -3,10 +3,9 @@
 """This script allows for the generation of new samples from a trained model"""
 
 from glund.read_data import Jets
-from glund.JetTree import JetTree, LundImage
+from glund.JetTree import JetTree, LundImage, xval, yval
 from glund.preprocess import Averager
 from glund.model import load_model_and_preprocessor
-from glund.plotting import xval,yval
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -26,7 +25,8 @@ def plot_events_debug(gen_sample, preproc, datafile, setup, folder):
         reader=Jets(datafile, 5000)
         events=reader.values()
         img_data=np.zeros((len(events), setup['npx'], setup['npx'], 1))
-        li_gen=LundImage(npxlx = setup['npx'])
+        li_gen=LundImage(npxlx = setup['npx'], 
+                         y_axis = setup['y_axis'] if 'y_axis' in setup else 'kt')
         for i, jet in enumerate(events):
             tree = JetTree(jet)
             img_data[i]=li_gen(tree).reshape(setup['npx'], setup['npx'], 1)
@@ -79,7 +79,8 @@ def plot_events(gen_sample, avg, preproc, datafile, setup, folder):
     reader=Jets(datafile, 5000)
     events=reader.values()
     img_data=np.zeros((len(events), setup['npx'], setup['npx'], 1))
-    li_gen=LundImage(npxlx = setup['npx'])
+    li_gen=LundImage(npxlx = setup['npx'],
+                     y_axis = setup['y_axis'] if 'y_axis' in setup else 'kt')
     for i, jet in enumerate(events):
         tree = JetTree(jet)
         img_data[i]=li_gen(tree).reshape(setup['npx'], setup['npx'], 1)
@@ -99,7 +100,8 @@ def plot_events(gen_sample, avg, preproc, datafile, setup, folder):
         plt.title('Raw input')
         plt.imshow(img_data[0].reshape(setup['npx'],setup['npx']).transpose(),
                    vmin=-1.0, vmax=1.0, cmap=cm.seismic, origin='lower',
-                   aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+                   aspect='auto', extent=[LundImage.xval[0], LundImage.xval[1],
+                                          LundImage.yval[0], LundImage.yval[1]])
         plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
@@ -110,7 +112,8 @@ def plot_events(gen_sample, avg, preproc, datafile, setup, folder):
         plt.title('Averaged input')
         plt.imshow(img_input[0].reshape(setup['npx'],setup['npx']).transpose(),
                    vmin=-1.0, vmax=1.0, cmap=cm.seismic, origin='lower',
-                   aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+                   aspect='auto', extent=[LundImage.xval[0], LundImage.xval[1],
+                                          LundImage.yval[0], LundImage.yval[1]])
         plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
@@ -121,7 +124,8 @@ def plot_events(gen_sample, avg, preproc, datafile, setup, folder):
         plt.title('Preprocessed input')
         plt.imshow(img_unmask[0].reshape(setup['npx'],setup['npx']).transpose(),
                    vmin=-1.0, vmax=1.0, cmap=cm.seismic, origin='lower',
-                   aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+                   aspect='auto', extent=[LundImage.xval[0], LundImage.xval[1],
+                                          LundImage.yval[0], LundImage.yval[1]])
         plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
@@ -132,7 +136,8 @@ def plot_events(gen_sample, avg, preproc, datafile, setup, folder):
         plt.title('Raw generated output')
         plt.imshow(gen_unmask[0].reshape(setup['npx'],setup['npx']).transpose(),
                    vmin=-1.0, vmax=1.0, cmap=cm.seismic, origin='lower',
-                   aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+                   aspect='auto', extent=[LundImage.xval[0], LundImage.xval[1],
+                                          LundImage.yval[0], LundImage.yval[1]])
         plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
@@ -143,7 +148,8 @@ def plot_events(gen_sample, avg, preproc, datafile, setup, folder):
         plt.title('Processed generated sample')
         plt.imshow(gen_processed[0].reshape(setup['npx'],setup['npx']).transpose(),
                    vmin=-1.0, vmax=1.0, cmap=cm.seismic, origin='lower',
-                   aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+                   aspect='auto', extent=[LundImage.xval[0], LundImage.xval[1],
+                                          LundImage.yval[0], LundImage.yval[1]])
         plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
@@ -154,7 +160,8 @@ def plot_events(gen_sample, avg, preproc, datafile, setup, folder):
         plt.title('Generated sample')
         plt.imshow(gen_final[0].reshape(setup['npx'],setup['npx']).transpose(),
                    vmin=-1.0, vmax=1.0, cmap=cm.seismic, origin='lower',
-                   aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+                   aspect='auto', extent=[LundImage.xval[0], LundImage.xval[1],
+                                          LundImage.yval[0], LundImage.yval[1]])
         plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
@@ -184,7 +191,7 @@ def main():
 
     folder=args.model.strip('/')
     with open(f'{folder}/input-runcard.json','r') as stream: 
-        setup=yaml.load(stream)
+        setup=yaml.load(stream, Loader=yaml.FullLoader)
 
     model, preproc = load_model_and_preprocessor(folder, setup)
 

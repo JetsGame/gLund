@@ -6,10 +6,6 @@ from glund.JetTree import JetTree, LundImage
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 
-    
-xval = [0.0, 7.0]
-yval = [-3.0, 7.0]
-
 #----------------------------------------------------------------------
 def plot_lund(filename, figname):
     """Plot a few samples of lund images as well as the average density."""
@@ -34,7 +30,7 @@ def plot_lund(filename, figname):
 
         
 #----------------------------------------------------------------------
-def plot_lund_with_ref(filename, reference, figname):
+def plot_lund_with_ref(filename, reference, figname, y_axis='kt'):
     """Plot a samples of lund images and the average density along with reference data."""
     r, c = 5, 5
     imgs = np.load(filename)
@@ -51,7 +47,8 @@ def plot_lund_with_ref(filename, reference, figname):
         reader=Jets(reference, imgs.shape[0])
         events=reader.values()
         imgs_ref=np.zeros((len(events), imgs.shape[1], imgs.shape[2]))
-        li_gen=LundImage(npxlx = imgs.shape[1], npxly = imgs.shape[2])
+        li_gen=LundImage(npxlx = imgs.shape[1], npxly = imgs.shape[2], 
+                         y_axis = y_axis)
         for i, jet in enumerate(events):
             tree = JetTree(jet)
             imgs_ref[i]=li_gen(tree).reshape(imgs.shape[1], imgs.shape[2])
@@ -81,7 +78,8 @@ def plot_lund_with_ref(filename, reference, figname):
         cbartics   = [0, 0.05, 0.1, 0.15, 0.2, 0.25]
         plt.title('generated')
         plt.imshow(np.average(imgs,axis=0).transpose(), origin='lower',vmin=0.0,vmax=0.2,
-                   aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+                   aspect='auto', extent=[LundImage.xval[0], LundImage.xval[1],
+                                          LundImage.yval[0], LundImage.yval[1]])
         plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
@@ -90,7 +88,8 @@ def plot_lund_with_ref(filename, reference, figname):
         fig=plt.figure(figsize=(6,6))
         plt.title('reference')
         plt.imshow(np.average(imgs_ref,axis=0).transpose(), origin='lower',vmin=0.0, vmax=0.2,
-                   aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+                   aspect='auto', extent=[LundImage.xval[0], LundImage.xval[1],
+                                          LundImage.yval[0], LundImage.yval[1]])
         plt.colorbar(orientation='vertical', label=r'$\rho$', ticks=cbartics)
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
@@ -100,7 +99,8 @@ def plot_lund_with_ref(filename, reference, figname):
         plt.title('generated/reference')
         plt.imshow(np.divide(np.average(imgs,axis=0).transpose(), np.average(imgs_ref,axis=0).transpose()),
                    origin='lower', vmin=0.5, vmax=1.5, cmap=cm.seismic,
-                   aspect='auto', extent=[xval[0], xval[1], yval[0], yval[1]])
+                   aspect='auto', extent=[LundImage.xval[0], LundImage.xval[1],
+                                          LundImage.yval[0], LundImage.yval[1]])
         plt.colorbar(orientation='vertical')
         plt.xlabel('$\ln(1 / \Delta_{ab})$')
         plt.ylabel('$\ln(k_{t} / \mathrm{GeV})$')
