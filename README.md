@@ -3,7 +3,7 @@
 gLund
 ======
 
-This repository contains the code and results presented in [arXiv:1908.xxxxx](https://arxiv.org/abs/1908.xxxxxx).
+This repository contains the code and results presented in [arXiv:1909.01359](https://arxiv.org/abs/1909.01359).
 
 ## About
 
@@ -47,7 +47,7 @@ gLund requires the following packages:
 ## Pre-trained models
 
 The final models presented in
-[arXiv:1908.xxxxx](https://arxiv.org/abs/1908.xxxxx "gLund paper")
+[arXiv:1909.01359](https://arxiv.org/abs/1909.01359 "gLund paper")
 are stored in:
 - results/lsgan: gLund LSGAN model trained on QCD jets (Pythia 8 + Delphes v3.4.1 fast detector simulation).
 - results/vae: gLund VAE model trained on QCD jets (Pythia 8 + Delphes v3.4.1 fast detector simulation).
@@ -73,5 +73,5 @@ glund_generate --save --ngen <number_to_generate> --output <result_file.npy> <mo
 
 ## References
 
-* S. Carrazza and F. A. Dreyer, "Towards a generative model for jet substructure,"
-  [arXiv:1908.xxxxx](https://arxiv.org/abs/1908.xxxxx "gLund paper")
+* S. Carrazza and F. A. Dreyer, "Lund jet images from generative and cycle-consistent adversarial networks,"
+  [arXiv:1909.01359](https://arxiv.org/abs/1909.01359 "gLund paper")
