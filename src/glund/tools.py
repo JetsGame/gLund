@@ -2,7 +2,7 @@
 
 import numpy as np
 from scipy import linalg
-from skimage.measure import compare_ssim as ssim
+from skimage.metrics import structural_similarity as ssim
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils import check_array, as_float_array
